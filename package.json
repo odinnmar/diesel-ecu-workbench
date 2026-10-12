@@ -1,0 +1,50 @@
+{
+  "name": "diesel-ecu-workbench",
+  "version": "1.0.0",
+  "description": "Offline Diesel ECU Calibration Workbench",
+  "main": "main.js",
+  "author": "Diesel ECU Workbench",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "net.dieselecu.workbench",
+    "productName": "Diesel ECU Workbench",
+    "icon": "build/app.ico",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "build/app.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "Diesel-ECU-Workbench-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Diesel ECU Workbench",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}
