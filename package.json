@@ -17,24 +17,13 @@
   "build": {
     "appId": "net.dieselecu.workbench",
     "productName": "Diesel ECU Workbench",
-    "icon": "build/app.ico",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "main.js",
-      "src/**/*",
-      "package.json"
-    ],
+    "icon": "app.ico",
+    "directories": { "output": "release" },
+    "files": ["main.js", "index.html", "app.ico", "package.json"],
     "asar": true,
     "win": {
-      "icon": "build/app.ico",
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        }
-      ],
+      "icon": "app.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
       "artifactName": "Diesel-ECU-Workbench-Setup-${version}.${ext}"
     },
     "nsis": {
