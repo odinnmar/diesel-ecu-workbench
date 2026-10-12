@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diesel ECU Workbench</title>
+<style>
+:root{--bg:#080d18;--panel:#101a2b;--panel2:#17243a;--line:#2a3b56;--text:#f0f5ff;--muted:#9eafc9;--accent:#73c7ff;--good:#63d9ad;--warn:#ffca78;--bad:#ff858e;--radius:16px}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% -10%,#183353 0,transparent 34%),radial-gradient(ellipse at 100% 0%,#152942 0,transparent 30%),linear-gradient(145deg,#080d18,#0b1322 60%,#0b1726);color:var(--text);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;letter-spacing:.05px}
+header{padding:26px max(18px,calc((100vw - 1280px)/2));border-bottom:1px solid #2c4563;background:linear-gradient(105deg,#0c1728f2,#101e31ee);position:sticky;top:0;z-index:5;backdrop-filter:blur(14px);box-shadow:0 12px 35px #0002}
+h1{font-size:clamp(23px,3vw,32px);margin:0 0 5px;letter-spacing:-.7px;background:linear-gradient(90deg,#f5f8ff,#9fd8ff);-webkit-background-clip:text;background-clip:text;color:transparent}header p{color:var(--muted);margin:0}.wrap{max-width:1320px;margin:auto;padding:22px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}.tab{border:1px solid #2b3c57;background:linear-gradient(180deg,#121d30,#0e1728);color:#aebed5;padding:10px 15px;border-radius:11px;cursor:pointer;font-weight:650;transition:transform .15s,border-color .15s,background .15s}.tab:hover{border-color:#4c739b;transform:translateY(-1px)}.tab.active{background:linear-gradient(135deg,#1b4770,#18364f);color:white;border-color:#66b9f1;box-shadow:0 5px 18px #2879b52a}
+section{display:none}section.active{display:block}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}.card{background:linear-gradient(155deg,#121e31f5,#0e1728f8 72%);border:1px solid #293a54;border-radius:var(--radius);padding:18px;min-width:0;box-shadow:0 10px 30px #00000018;transition:border-color .18s,transform .18s}.card:hover{border-color:#3a5575}.span12{grid-column:span 12}.span8{grid-column:span 8}.span7{grid-column:span 7}.span6{grid-column:span 6}.span5{grid-column:span 5}.span4{grid-column:span 4}.span3{grid-column:span 3}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;margin:16px 0 8px;color:#d9e7ff}.sub{color:var(--muted);font-size:12px;margin:-5px 0 12px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.fields.three{grid-template-columns:repeat(3,minmax(0,1fr))}.fields.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}input,select,textarea{width:100%;background:#091321;border:1px solid #30425d;color:var(--text);border-radius:9px;padding:10px 11px;font:inherit;min-width:0;box-shadow:inset 0 1px 2px #0002;transition:border-color .15s,box-shadow .15s}textarea{min-height:110px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px}input:focus,select:focus,textarea:focus{outline:none;border-color:#68b9ef;box-shadow:0 0 0 3px #54a9e822}
+button{border:1px solid #4c85b6;background:linear-gradient(135deg,#23639a,#17476f);color:#f3f8ff;border-radius:10px;padding:10px 13px;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 12px #0002;transition:transform .14s,filter .14s,box-shadow .14s}button:hover{filter:brightness(1.13);transform:translateY(-1px);box-shadow:0 7px 16px #0003}button:active{transform:translateY(0)}button.secondary{background:linear-gradient(135deg,#1a293e,#141f31);border-color:#344761;color:#d6e2f7}button.danger{background:#3a2029;border-color:#77404b}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin-top:12px}.metric{background:linear-gradient(145deg,#0b1727,#0a1220);border:1px solid #293d58;border-radius:12px;padding:12px;box-shadow:inset 0 1px #ffffff05}.metric small{display:block;color:#9eafc9;font-size:11px;letter-spacing:.25px;text-transform:uppercase}.metric strong{font-size:20px;display:block;margin-top:4px;overflow-wrap:anywhere;color:#f4f8ff;font-variant-numeric:tabular-nums}.metric em{font-style:normal;color:var(--muted);font-size:11px}
+.notice{border-left:3px solid var(--accent);background:linear-gradient(100deg,#142b43,#112036);padding:12px 14px;border-radius:0 10px 10px 0;color:#d6e7ff;font-size:12px;margin:12px 0}.notice.warn{border-color:var(--warn);background:#2b2115;color:#ffe4b7}.notice.bad{border-color:var(--bad);background:#2b1821;color:#ffd3d3}.notice.good{border-color:var(--good);background:#10271f;color:#c7ffe7}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{color:#b8c9e5;font-weight:650}td input{padding:6px;font-size:12px;min-width:72px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}.mapshot-table th,.mapshot-table td{white-space:nowrap;padding:4px}.mapshot-table input{width:86px;min-width:86px;padding:7px 6px}.mapshot-table .newcol{background:#123554}.mapshot-table .newcol input{border-color:#3679a8;background:#0b2236}canvas{width:100%;height:230px;background:linear-gradient(145deg,#091321,#0c1929);border:1px solid #293c57;border-radius:12px}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.small{font-size:12px}.hide{display:none!important}.pill{display:inline-block;border:1px solid var(--line);padding:3px 7px;border-radius:99px;color:var(--muted);font-size:11px;margin-right:4px}.foot{color:var(--muted);font-size:11px;margin:18px 0 4px}.checks{display:grid;gap:7px}.checkrow{padding:10px 12px;border:1px solid #2b3e59;border-radius:10px;background:linear-gradient(135deg,#101d30,#0d1727)}.checkrow b{color:#dfeaff}.checkrow span{color:var(--muted)}
+@media(max-width:850px){.span8,.span7,.span6,.span5,.span4,.span3{grid-column:span 12}.fields.four,.fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}header{position:static}}
+@media(max-width:480px){.wrap{padding:12px}.fields,.fields.three,.fields.four{grid-template-columns:1fr}.card{padding:12px}.tab{padding:8px 10px}}
+
+/* Desktop Edition visual polish: layout only; calculation logic remains unchanged. */
+:root{--radius:14px;--accent:#72c8ff;--panel:#111d2e;--line:#2a3b52}
+body{background:radial-gradient(ellipse at 18% -14%,#173553 0,transparent 38%),linear-gradient(150deg,#080d16,#0b1421 58%,#0b1723);font-size:13.5px}
+.app-hero{padding:0 max(22px,calc((100vw - 1380px)/2));position:relative;background:linear-gradient(110deg,#0c1726f5,#101d2cf5);border-bottom:1px solid #2a4059;box-shadow:0 8px 28px #0002}
+.hero-inner{min-height:126px;display:flex;align-items:center;gap:18px;padding:20px 0;max-width:1380px;margin:auto}
+.brand-mark{width:54px;height:54px;flex:0 0 54px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(145deg,#2c83b8,#174263);border:1px solid #5ca9d5;box-shadow:0 7px 22px #1679ad35;color:#fff;font-weight:900;font-size:14px;letter-spacing:1px}
+.hero-copy{min-width:0;flex:1}.eyebrow{font-size:10px;font-weight:800;letter-spacing:1.7px;color:#8ca9c8;margin-bottom:4px}.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#63d9ad;vertical-align:middle;margin:0 5px 1px 7px;box-shadow:0 0 9px #63d9ad70}
+.app-hero h1{font-size:clamp(22px,2.4vw,30px);margin:0 0 3px;letter-spacing:-.8px}.app-hero p{font-size:12px;max-width:760px}.hero-version{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;border-left:1px solid #293c52;padding-left:22px;line-height:1.4}.hero-version span{font-size:9px;letter-spacing:1.5px;color:#8ca9c8;font-weight:800}.hero-version strong{font-size:16px;color:#e6f4ff}.hero-version small{font-size:10px;color:var(--muted)}
+.wrap{max-width:1420px;padding:22px 26px 30px}.wrap>.card:first-child{padding:19px 21px;background:linear-gradient(135deg,#111f31,#101a29);border-color:#30445e}.wrap>.card:first-child h2{font-size:16px}.checkrow{background:#0e1928;border-color:#263950}.checkrow b{font-size:12px}.checkrow span{font-size:11px;line-height:1.55;display:inline-block;margin-top:3px}
+nav#tabs{gap:7px;margin:0 0 20px;padding:0 0 12px;border-bottom:1px solid #1d2b3d}.tab{font-size:12px;padding:9px 13px;border-radius:9px;box-shadow:none}.tab.active{box-shadow:0 3px 12px #2879b51a}.grid{gap:16px}.card{padding:20px;background:linear-gradient(155deg,#121d2cfa,#0e1724fa 80%);box-shadow:0 8px 24px #00000014}.card h2{font-size:15px;letter-spacing:.05px}.sub{line-height:1.6;font-size:11.5px;margin-top:-5px;margin-bottom:14px}label{font-size:11px;font-weight:650;letter-spacing:.1px}input,select,textarea{border-radius:8px;background:#09121e;border-color:#2b3d53;padding:10px 11px;font-size:12.5px}button{font-size:12px;border-radius:8px;padding:9px 12px}button.secondary{box-shadow:none}.actions{gap:7px}.notice{line-height:1.6;border-radius:0 8px 8px 0}.metric{padding:13px}.metric strong{font-size:19px}.pill{font-size:9px;letter-spacing:.8px;vertical-align:middle;color:#b4dfff;border-color:#355572;background:#14283b;padding:3px 7px}
+section{scroll-margin-top:16px}.tablewrap{border-radius:10px}.foot{padding-top:8px;border-top:1px solid #1d2b3d}
+@media(max-width:850px){.app-hero{padding:0 18px}.hero-inner{min-height:0}.hero-version{display:none}.wrap{padding:16px}.card{padding:16px}}
+@media(max-width:520px){.hero-inner{gap:12px;padding:16px 0}.brand-mark{width:43px;height:43px;flex-basis:43px;border-radius:12px}.eyebrow{font-size:8px;letter-spacing:1px}.app-hero h1{font-size:21px}.app-hero p{font-size:11px}.app-hero .pill{display:none}.wrap{padding:12px}.wrap>.card:first-child{padding:14px}.card{padding:13px}}
+
+</style>
+</head>
+<body>
+<header class="app-hero"><div class="hero-inner"><div class="brand-mark" aria-hidden="true"><span>ECU</span></div><div class="hero-copy"><div class="eyebrow">OFFLINE CALIBRATION TOOLKIT <span class="status-dot"></span> LOCAL MODE</div><h1>Diesel ECU Workbench <span class="pill">DESKTOP EDITION</span></h1><p>Calibration calculations, map tools, log analysis and project checks — in one focused workspace.</p></div><div class="hero-version"><span>WORKBENCH</span><strong>1.0.0</strong><small>Windows Edition</small></div></div></header>
+<div class="wrap">
+<div class="card" style="margin-bottom:14px">
+<h2>Start here — what are you trying to do?</h2>
+<p class="sub">You do not need to use every calculator. Pick the job you want to do:</p>
+<div class="fields three">
+<div class="checkrow"><b>Calculate injection end timing</b><br><span>Open <b>SOI / EOI</b>. Enter RPM, duration, duration unit, and original / modified SOI.</span></div>
+<div class="checkrow"><b>Continue map values</b><br><span>Open <b>Map Maths</b>. Enter the previous and last values, then press Generate sequence.</span></div>
+<div class="checkrow"><b>See what changed in a tune</b><br><span>Open <b>Map Compare</b>. Paste matching stock and tuned map grids.</span></div>
+<div class="checkrow"><b>Check driving logs</b><br><span>Open <b>Log Analysis</b>. Put requested and actual readings on the same RPM row.</span></div>
+<div class="checkrow"><b>Convert pressure or duration</b><br><span>Open <b>Units & Fuel</b>. Choose the units shown by your tool.</span></div>
+<div class="checkrow"><b>Save your work</b><br><span>Open <b>Project & Checks</b>. Add car/file notes and export a session JSON.</span></div>
+</div>
+<div class="notice warn"><b>Important:</b> this tool does not know what a map’s raw values mean. Confirm the map name, axis labels, scaling and units in your ECU software before using the results.</div>
+</div>
+<nav id="tabs">
+<button class="tab active" data-tab="eoi">SOI / EOI</button>
+<button class="tab" data-tab="math">Map Maths</button>
+<button class="tab" data-tab="mapshot">Screenshot Map Extender</button>
+<button class="tab" data-tab="compare">Map Compare</button>
+<button class="tab" data-tab="logs">Log Analysis</button>
+<button class="tab" data-tab="units">Units & Fuel</button>
+<button class="tab" data-tab="project">Project & Checks</button>
+<button class="tab" data-tab="advanced">Tuning Helpers</button>
+</nav>
+
+<section id="eoi" class="active">
+<div class="grid">
+<div class="card span7">
+<h2>SOI / EOI calculator</h2><p class="sub">Compare stock and tuned injection timing at matching operating points. Enter the duration and SOI that correspond to each file’s own IQ value, then press <b>Calculate</b>.</p><div class="notice"><b>Important: match each SOI to its own fuel quantity.</b><br>Enter the stock duration and stock SOI for the same stock IQ point, then the tuned duration and tuned SOI for the same tuned IQ point. Select the SOI sign convention below to match how your map values are displayed. Example: stock maps at 60 mg/stroke must not be compared with a tuned SOI at 85 mg/stroke while reusing the old duration. Read/interpolate each value at the same RPM and its corresponding IQ. Confirm duration units and scaling first.</div>
+<div class="fields three">
+<div><label>Engine speed (rpm)</label><input id="rpm" type="number" value="2500" step="50"></div>
+<div><label>Stock duration at stock IQ</label><input id="oriDur" type="number" placeholder="Value from stock duration map" step="any"></div>
+<div><label>Tuned duration at tuned IQ</label><input id="dur" type="number" placeholder="Value from tuned duration map" step="any"></div>
+<div><label>Duration unit / scaling</label><select id="durUnit"><option value="us">Microseconds (µs)</option><option value="ms">Milliseconds (ms)</option><option value="deg">Crank degrees (°)</option></select></div>
+<div><label>SOI value convention</label><select id="soiConvention"><option value="btdc">BTDC entered as positive (e.g. 9.49)</option><option value="signed">Signed crank angle (BTDC negative, e.g. −9.49)</option></select></div>
+<div class="notice" style="grid-column:1/-1"><b>EOI formula:</b> EOI relative to TDC = duration in crank degrees − SOI in positive BTDC convention. If your SOI values are signed angles (BTDC negative), choose Signed and the tool converts the sign. This is only valid if the entered duration is the effective injection duration in the selected units.</div>
+<div><label>Stock SOI (value as stored/displayed)</label><input id="oriSoi" type="number" placeholder="Check map sign convention" step=".01"></div>
+<div><label>Tuned SOI (value as stored/displayed)</label><input id="modSoi" type="number" placeholder="Check map sign convention" step=".01"></div>
+<div><label>Desired EOI (optional)</label><input id="targetEoi" type="number" placeholder="e.g. 14" step=".1"></div>
+</div>
+<div class="fields three" style="margin-top:10px">
+<div><label>Stock IQ for stock duration/SOI (mg/stroke)</label><input id="oriIq" type="number" placeholder="e.g. 60" step=".1"></div>
+<div><label>Tuned IQ for tuned duration/SOI (mg/stroke)</label><input id="iq" type="number" placeholder="e.g. 85" step=".1"></div>
+<div><label>Stock rail pressure (bar, optional)</label><input id="railStock" type="number" placeholder="Optional"></div>
+<div><label>Tuned rail pressure requested (bar)</label><input id="railReq" type="number" placeholder="Optional" step="1"></div>
+<div><label>Tuned rail pressure actual (bar)</label><input id="railAct" type="number" placeholder="Optional"></div>
+</div>
+<div class="actions"><button id="calcEoi">Calculate</button><button class="secondary" id="addEoi">Add point to table</button><button class="secondary" id="clearEoi">Clear table</button></div>
+<div id="eoiResults" class="results"></div>
+<div class="notice"><b>How to read the result:</b> EOI means when injection ends relative to top dead centre (TDC). A positive result is after TDC. “SOI for target EOI” works backwards from the target you enter. The target-SOI result uses the tuned duration converted to crank degrees first. This is a calculation, not a recommendation for a safe target.</div>
+</div>
+<div class="card span5">
+<h2>Extra readings (optional)</h2><p class="sub">These help you compare the tune with real logs. They do not change the EOI calculation.</p>
+<div class="fields">
+<div><label>Boost requested (absolute mbar, optional)</label><input id="boostReq" type="number" placeholder="e.g. 2460"></div>
+<div><label>Boost actual (absolute mbar, optional)</label><input id="boostAct" type="number" placeholder="Optional"></div>
+<div><label>MAF actual (optional, mg/stroke)</label><input id="maf" type="number" placeholder="Optional"></div>
+<div><label>Point / notes</label><input id="pointNote" placeholder="e.g. 3000 rpm / high load"></div>
+</div>
+<div id="contextResults" class="results"></div>
+<h3>EOI points</h3><div class="tablewrap"><table id="eoiTable"><thead><tr><th>RPM</th><th>Stock IQ</th><th>Tuned IQ</th><th>Stock dur°</th><th>Tuned dur°</th><th>Stock EOI</th><th>Tuned EOI</th><th>Rail Δ</th><th>Boost Δ</th><th></th></tr></thead><tbody></tbody></table></div>
+<div class="actions"><button class="secondary" id="exportEoi">Export EOI CSV</button></div>
+</div>
+<div class="card span12"><h2>EOI trend</h2><canvas id="eoiChart" width="1100" height="260"></canvas><p class="sub">Points are plotted in the order entered. Use a consistent operating point / map interpolation method when comparing rows.</p></div>
+</div>
+</section>
+
+
+<section id="mapshot">
+<div class="grid">
+ <div class="card span12">
+  <h2>Screenshot-assisted map extender <span class="pill">OFFLINE • EXPERIMENTAL</span></h2>
+  <p class="sub">Keep the StageX screenshot visible beside an editable table, then extrapolate new columns for every row at once. Nothing is uploaded anywhere.</p>
+  <div class="notice warn"><b>Offline OCR prototype:</b> select only the numeric body of the map (exclude headers/axes), then set the exact row and column count. This built-in lightweight recognizer works locally without downloads, but it is not as reliable as full OCR. Always inspect and correct every extracted value before extending a map.</div>
+  <div class="fields three">
+   <div><label>Load map screenshot</label><input id="mapShotFile" type="file" accept="image/*"></div>
+   <div><label>Number of map rows</label><input id="mapShotRows" type="number" min="1" max="80" value="8"></div>
+   <div><label>Existing map columns</label><input id="mapShotCols" type="number" min="2" max="40" value="6"></div>
+   <div><label>New mm³/stroke axis points to add</label><input id="mapShotAddCols" type="number" min="1" max="20" value="2"></div>
+   <div class="span12"><label>Existing column axis — mm³/stroke (comma-separated)</label><input id="mapShotAxis" type="text" value="0, 10, 20, 30, 40, 50" placeholder="e.g. 0, 10, 20, 30, 40, 50"><p class="sub">Enter the actual axis values shown in StageX, one per existing column. The example values are only placeholders.</p></div>
+   <div><label>Next axis step (mm³/stroke)</label><input id="mapShotAxisStep" type="number" min="0.001" step="any" value="10"><p class="sub">Used to generate the new axis points after the last existing point.</p></div>
+   <div><label>Decimal places</label><select id="mapShotDecimals"><option>0</option><option selected>2</option><option>3</option><option>4</option><option>6</option></select></div>
+   <div><label>Extrapolation method</label><select id="mapShotMethod"><option value="linear">Repeat last difference (linear)</option><option value="trend">Linear regression over each row</option></select></div>
+<div><label>Duration-map pressure schedule</label><select id="mapShotPressureSchedule"><option value="off" selected>Off — normal extrapolation</option><option value="on">On — 1.0 through 1000 bar, 0.9 at 1100, 0.8 at 1200+</option></select><small class="muted">Assumes rows run top-to-bottom in 100-bar pressure steps starting at 0 bar.</small></div>
+  </div>
+  <div class="actions"><button id="mapShotBuild">Build / reset editable grid</button><button class="secondary" id="mapShotFillExample">Load example grid</button><button class="secondary" id="mapShotClear">Clear values</button></div>
+ </div>
+ <div class="card span5">
+  <h2>Screenshot reference</h2><p class="sub">Use a straight-on numeric table screenshot. Zoom your browser if the cells are small.</p>
+  <div id="mapShotImageEmpty" class="notice">Choose an image above to display it here.</div>
+  <img id="mapShotImage" alt="Uploaded map screenshot reference" class="hide" style="display:block;max-width:100%;max-height:75vh;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#08111e;margin:auto">
+  <div class="actions"><button id="mapShotZoomIn" class="secondary">Zoom in</button><button id="mapShotZoomOut" class="secondary">Zoom out</button><button id="mapShotFit" class="secondary">Fit</button></div>
+  <p class="foot">Load a straight-on screenshot, then drag-select the complete rectangular grid including its cell borders. Grid detection will find cell boundaries. For best results, include only the table, not menus or surrounding panels.</p>
+  <div style="margin-top:12px"><canvas id="mapOcrCanvas" width="900" height="500" style="height:auto;max-height:65vh;cursor:crosshair"></canvas></div>
+  <div class="fields three" style="margin-top:10px">
+   <div><label>OCR rows (must match map rows)</label><input id="ocrRows" type="number" min="1" max="80" value="8"></div>
+   <div><label>OCR columns (existing map columns)</label><input id="ocrCols" type="number" min="2" max="40" value="6"></div>
+   <div><label>Text contrast threshold</label><input id="ocrThreshold" type="range" min="40" max="220" value="150"><p class="sub">Adjust if digits are faint or the background is dark.</p></div>
+  </div>
+  <div class="actions"><button id="mapOcrDetect" class="secondary">Detect grid boundaries</button><button id="mapOcrRun">Recognize cells offline</button><button id="mapOcrReset" class="secondary">Clear selection</button></div>
+  <div id="mapOcrStatus" class="notice">No crop selected. Drag a rectangle around the complete grid. Set rows/columns to match the selected grid, including a header row if you want it read.</div>
+ </div>
+ <div class="card span7">
+  <h2>Enter or correct the map values</h2>
+  <p class="sub">Each row is one map row. Columns are labelled by their actual mm³/stroke axis values. Enter the existing map cells left to right; the selected method estimates values at the new axis points. Leave no blanks in the source cells.</p>
+  <div id="mapShotGridWrap" class="tablewrap" style="max-height:65vh;overflow:auto"><p style="padding:12px" class="muted">Choose row/column counts and press Build / reset editable grid.</p></div>
+  <div class="actions"><button id="mapShotExtend">Extend all rows</button><button class="secondary" id="mapShotCopy">Copy extended table</button><button class="secondary" id="mapShotExport">Export CSV</button></div>
+  <div id="mapShotStatus" class="notice">No map generated yet.</div>
+ </div>
+ <div class="card span12">
+  <h2>Extended map preview</h2><p class="sub">Headers show the actual mm³/stroke axis points, and new points are marked in blue. Check the results against the original map and axis before using them.</p>
+  <div id="mapShotOutputWrap" class="tablewrap"><p style="padding:12px" class="muted">The extended table will appear here.</p></div>
+  <div class="notice bad"><b>Calibration caution:</b> extrapolation only continues a mathematical pattern. It does not know the actuator, turbo, injector, torque, smoke, temperature or safety constraints for your ECU. Never write the generated values without independently checking them.</div>
+ </div>
+</div>
+</section>
+
+<section id="math">
+<div class="grid">
+<div class="card span6">
+<h2>Continue a row of map values</h2><p class="sub">Enter the last two values from a row or column. The calculator repeats their difference to estimate the next values.</p><div class="notice"><b>Example:</b> previous = 41 and last = 40. The difference is −1, so the next value is 39, then 38. Use this only as a mathematical estimate; real map curves often do not continue in a straight line.</div>
+<div class="fields three">
+<div><label>Second-last map value</label><input id="exPrev" type="number" value="41" step="any"></div>
+<div><label>Last map value</label><input id="exLast" type="number" value="40" step="any"></div>
+<div><label>Step multiplier (usually 1)</label><input id="exMult" type="number" value="1" step=".1"></div>
+<div><label>Or percentage change (leave blank normally)</label><input id="exPct" type="number" placeholder="Optional" step=".1"></div>
+<div><label>How many values to estimate?</label><input id="exCount" type="number" value="5" min="1" max="100"></div>
+<div><label>Round to decimals</label><select id="exDec"><option>0</option><option selected>2</option><option>3</option><option>4</option><option>6</option></select></div>
+</div>
+<div class="actions"><button id="runExtrap">Generate sequence</button><button class="secondary" id="copyExtrap">Copy sequence</button></div>
+<div id="extrapResults" class="results"></div><div id="extrapOut" class="notice mono">Enter the previous and last values.</div>
+<div class="notice warn">Extrapolation is mathematics, not a calibration recommendation. Never extend a map blindly past its validated operating range.</div>
+</div>
+<div class="card span6">
+<h2>Estimate a value between two known points</h2><p class="sub">Use this when you know the values at two RPM or load points and want a straight-line estimate between them.</p><div class="notice">Example: if a value is 50 at 2000 rpm and 44.5 at 2500 rpm, enter those as X₁/Y₁ and X₂/Y₂, then enter 2250 as Target X.</div>
+<div class="fields three">
+<div><label>X₁</label><input id="ix1" type="number" value="2000"></div><div><label>Y₁</label><input id="iy1" type="number" value="50"></div><div><label>X₂</label><input id="ix2" type="number" value="2500"></div><div><label>Y₂</label><input id="iy2" type="number" value="44.5"></div><div><label>Target X</label><input id="ix" type="number" value="2250"></div><div><label>Decimals</label><select id="idec"><option>0</option><option selected>2</option><option>3</option><option>4</option></select></div>
+</div>
+<div class="actions"><button id="runInterp">Calculate interpolation</button></div><div id="interpResult" class="results"></div>
+</div>
+<div class="card span6">
+<h2>Estimate the overall trend</h2><p class="sub">Paste a sequence of numbers, one per line. This smooths the trend across all entered values and predicts what comes next.</p>
+<label>Known values</label><textarea id="trendValues">50
+49
+48
+44.5
+41.5
+41</textarea>
+<div class="fields"><div><label>Future points</label><input id="trendCount" type="number" value="3" min="1" max="100"></div><div><label>Decimals</label><select id="trendDec"><option>0</option><option selected>2</option><option>3</option><option>4</option></select></div></div>
+<div class="actions"><button id="runTrend">Fit trend</button><button class="secondary" id="copyTrend">Copy predictions</button></div><div id="trendResult" class="notice">Fit results will appear here.</div>
+</div>
+<div class="card span6">
+<h2>Delta / percentage change</h2>
+<div class="fields"><div><label>Original</label><input id="deltaA" type="number" value="2360"></div><div><label>Modified</label><input id="deltaB" type="number" value="2460"></div></div>
+<div id="deltaResult" class="results"></div><div class="actions"><button id="runDelta">Calculate delta</button></div>
+</div>
+</div>
+</section>
+
+<section id="compare">
+<div class="grid">
+<div class="card span6">
+<h2>Compare stock vs tuned map</h2><p class="sub">Copy the numeric cells from the same map in both files. Paste the stock values in Original and tuned values in Modified. Keep the same number of rows and columns.</p><div class="notice"><b>How to paste:</b> select the number cells in your map editor or spreadsheet, copy, then click the matching box and paste. Rows should stay on separate lines. “Absolute delta” shows how much each cell changed.</div>
+<label>Stock / original map values</label><textarea id="mapA" placeholder="Paste original numeric map here">10 20 30
+12 22 32
+14 24 34</textarea>
+<label style="margin-top:10px">Modified map</label><textarea id="mapB">10 21 30
+12 25 32
+15 24 38</textarea>
+<div class="fields"><div><label>Output decimals</label><select id="mapDec"><option>0</option><option selected>2</option><option>3</option><option>4</option></select></div><div><label>Comparison output</label><select id="mapMode"><option value="delta">Absolute delta (MOD − ORI)</option><option value="percent">Relative change vs |original| (%)</option><option value="ratio">Ratio (MOD / ORI)</option></select></div></div>
+<div class="actions"><button id="compareMaps">Compare maps</button><button class="secondary" id="copyMapDiff">Copy result</button></div>
+<div id="mapSummary" class="results"></div><div id="mapDiffOut" class="notice mono">Paste two matching grids and compare.</div>
+</div>
+<div class="card span6">
+<h2>Clean copied numbers</h2><p class="sub">If copied map data contains labels or extra text, paste it here to pull out the numbers. Check the result carefully before using it.</p>
+<label>Source text</label><textarea id="cleanInput" placeholder="Paste table text here"></textarea>
+<div class="fields"><div><label>Separator</label><select id="cleanSep"><option value="tab">Tabs</option><option value="comma">Commas</option><option value="space">Spaces</option><option value="newline">New lines</option></select></div><div><label>Decimals</label><select id="cleanDec"><option>0</option><option selected>2</option><option>3</option><option>4</option><option>6</option></select></div></div>
+<div class="actions"><button id="cleanNumbers">Extract numbers</button><button class="secondary" id="copyClean">Copy output</button></div>
+<label style="margin-top:10px">Clean output</label><textarea id="cleanOutput" placeholder="Cleaned values appear here"></textarea>
+</div>
+<div class="card span12"><h2>Map math notes</h2><div class="notice">Map compare assumes the same dimensions and matching cell order. It does not identify map axes, units, map definitions, checksums, or whether a change is mechanically appropriate.</div></div>
+</div>
+</section>
+
+<section id="logs">
+<div class="grid">
+<div class="card span7">
+<h2>Compare requested vs actual while driving</h2><p class="sub">Enter values from a diagnostic log at the same RPM. Requested means what the ECU asks for; actual means what the sensors report. Add one row for each RPM point.</p><div class="notice"><b>Example:</b> if requested boost is 2400 mbar and actual boost is 2300 mbar, enter 2400 and 2300 in the same row. The error is −100 mbar. Use absolute pressure values, not gauge boost.</div>
+<div class="tablewrap"><table id="logTable"><thead><tr><th>RPM</th><th>Boost req (mbar abs)</th><th>Boost actual</th><th>Rail req (bar)</th><th>Rail actual</th><th>MAF mg/stroke</th><th>IQ mg/stroke</th><th>Notes</th><th></th></tr></thead><tbody></tbody></table></div>
+<div class="actions"><button id="addLog">+ Add row</button><button class="secondary" id="sampleLog">Load example</button><button class="secondary" id="analyzeLog">Analyze logs</button><button class="secondary" id="exportLog">Export log CSV</button></div>
+</div>
+<div class="card span5">
+<h2>Log summary</h2><div id="logSummary" class="results"></div><div id="logFlags" class="checks" style="margin-top:12px"><div class="checkrow"><b>Waiting for data</b><br><span>Add log rows and analyze.</span></div></div>
+<div class="notice warn">Boost should be compared on a consistent pressure basis. This app uses absolute mbar for boost. If your logger reports gauge pressure, convert it first.</div>
+</div>
+<div class="card span12"><h2>Requested vs actual boost</h2><canvas id="boostChart" width="1100" height="260"></canvas></div>
+<div class="card span12"><h2>Requested vs actual rail pressure</h2><canvas id="railChart" width="1100" height="260"></canvas></div>
+</div>
+</section>
+
+<section id="units">
+<div class="grid">
+<div class="card span6">
+<h2>Convert a value between units</h2><p class="sub">Enter a number, choose its current unit, then choose the unit you want. Only compatible unit types can be converted.</p>
+<div class="fields"><div><label>Value</label><input id="unitVal" type="number" value="1450" step="any"></div><div><label>Convert from</label><select id="unitFrom"><option value="bar">bar</option><option value="mpa">MPa</option><option value="kpa">kPa</option><option value="mbar">mbar</option><option value="psi">psi</option><option value="rpm">rpm</option><option value="us">µs</option><option value="ms">ms</option><option value="deg">crank degrees</option><option value="mg">mg/stroke</option><option value="g">g/stroke</option><option value="mm3">mm³/stroke</option></select></div><div><label>Convert to</label><select id="unitTo"><option value="bar">bar</option><option value="mpa">MPa</option><option value="kpa">kPa</option><option value="mbar">mbar</option><option value="psi">psi</option><option value="rpm">rpm</option><option value="us">µs</option><option value="ms">ms</option><option value="deg">crank degrees</option><option value="mg">mg/stroke</option><option value="g">g/stroke</option><option value="mm3">mm³/stroke</option></select></div><div><label>Decimals</label><select id="unitDec"><option>0</option><option selected>3</option><option>4</option><option>6</option></select></div></div>
+<div class="fields" style="margin-top:10px"><div><label>Diesel density (mg/mm³)</label><input id="dieselDensity" type="number" value="0.835" min="0.5" max="1.0" step="0.001"></div></div><div class="actions"><button id="convertUnit">Convert</button></div><div id="unitResult" class="results"></div>
+<div class="notice">Fuel volume ↔ mass uses the diesel density entered above (default 0.835 mg/mm³, an approximation). Actual density varies with fuel and temperature. This is a volume/mass conversion, not an ECU-specific injection-quantity calibration.</div>
+</div>
+<div class="card span6">
+<h2>Duration time to crank degrees</h2><p class="sub">Use this only if your duration map is in microseconds or milliseconds. Enter the engine RPM at the operating point.</p>
+<div class="fields three"><div><label>Duration</label><input id="timeVal" type="number" value="1652"></div><div><label>Unit</label><select id="timeUnit"><option value="us">µs</option><option value="ms">ms</option></select></div><div><label>RPM</label><input id="timeRpm" type="number" value="2500"></div></div>
+<div id="timeResult" class="results"></div><div class="actions"><button id="convertTime">Calculate angle</button></div>
+<div class="notice">Formula: crank degrees = duration in seconds × RPM × 360 ÷ 60. If the duration map is already in crank degrees, do not convert it again.</div>
+</div>
+<div class="card span6">
+<h2>Torque to power calculator</h2><p class="sub">Enter torque in Nm and engine RPM. It calculates the theoretical power at that torque and RPM.</p>
+<div class="fields"><div><label>Torque (Nm)</label><input id="torque" type="number" value="500"></div><div><label>RPM</label><input id="powerRpm" type="number" value="3000"></div></div>
+<div class="actions"><button id="calcPower">Calculate power</button></div><div id="powerResult" class="results"></div>
+</div>
+<div class="card span6">
+<h2>Absolute boost to gauge boost</h2><p class="sub">If your logger says 2400 mbar absolute and ambient pressure is 1000 mbar, gauge boost is 1400 mbar.</p>
+<div class="fields"><div><label>Boost absolute (mbar)</label><input id="absBoost" type="number" value="2460"></div><div><label>Ambient pressure (mbar)</label><input id="ambient" type="number" value="1000"></div></div>
+<div class="actions"><button id="calcPressure">Calculate gauge boost</button></div><div id="pressureResult" class="results"></div>
+<div class="notice">Ambient pressure changes with weather and altitude. This conversion is arithmetic, not a turbo capability check.</div>
+</div>
+</div>
+</section>
+
+<section id="project">
+<div class="grid">
+<div class="card span6">
+<h2>Save notes about this car and file</h2><p class="sub">These details are for your own reference. Save a JSON session to keep your entered points, logs and notes together.</p><div class="fields"><div><label>Vehicle</label><input id="vehicle" placeholder="e.g. E46 330d"></div><div><label>Engine / ECU</label><input id="ecu" placeholder="e.g. M57 / DDE"></div><div><label>Turbo / hardware</label><input id="hardware" placeholder="Optional"></div><div><label>File / revision</label><input id="revision" placeholder="e.g. ORI, MOD v2"></div></div>
+<label style="margin-top:10px">Calibration notes / known uncertainties</label><textarea id="projectNotes" placeholder="Injector/nozzle details, map axis meaning, units, logging conditions, known hardware changes..."></textarea>
+<div class="actions"><button id="saveProject">Save session JSON</button><button class="secondary" id="loadProjectBtn">Load session JSON</button><input class="hide" id="loadProjectFile" type="file" accept=".json,application/json"></div>
+</div>
+<div class="card span6">
+<h2>Before changing a map</h2><div class="checks">
+<div class="checkrow"><b>Map identification</b><br><span>Confirm map purpose, axes, scaling, signedness and units before editing.</span></div>
+<div class="checkrow"><b>Injection duration</b><br><span>Confirm whether values are µs, ms, crank degrees, or another scaled quantity.</span></div>
+<div class="checkrow"><b>Injector / fuel system</b><br><span>Record injector part numbers/nozzles, rail type, pump and any calibration changes.</span></div>
+<div class="checkrow"><b>Air path</b><br><span>Check requested/actual boost, MAF, actuator control and smoke/EGT evidence under repeatable conditions.</span></div>
+<div class="checkrow"><b>Validation</b><br><span>Compare ORI and MOD files, verify checksum/write method, log repeatably, and keep a recoverable stock file.</span></div>
+</div>
+<div class="notice warn">Automatic flags are data-quality prompts, not proof that a calibration is safe. This tool does not read ECU binaries, identify maps, perform checksum correction, or replace logging and mechanical validation.</div>
+<div class="actions"><button class="secondary" id="exportAllCsv">Export EOI points CSV</button><button class="secondary" id="resetAll">Reset calculations</button></div>
+</div>
+<div class="card span12"><h2>Session status</h2><div id="sessionStatus" class="notice">This tool runs locally in your browser. Nothing is uploaded to a server.</div></div>
+</div>
+</section>
+
+<section id="advanced">
+<div class="grid">
+<div class="card span6">
+<h2>1. Fuel quantity estimate</h2>
+<p class="sub">A rough comparison tool. It does not know your injector flow curve, nozzle size, actual injection pressure at the nozzle, or ECU duration conversion.</p>
+<div class="notice"><b>How to use:</b> enter a known baseline IQ and its matching duration/rail pressure, then enter the new duration and rail pressure. The tool compares estimated delivery using a simplified duration × √pressure relationship.</div>
+<div class="fields three">
+<div><label>Known baseline IQ (mg/stroke)</label><input id="fuelBaseIq" type="number" placeholder="e.g. 60"></div>
+<div><label>Baseline duration (µs)</label><input id="fuelBaseDur" type="number" placeholder="e.g. 1400"></div>
+<div><label>Baseline rail (bar)</label><input id="fuelBaseRail" type="number" placeholder="e.g. 1350"></div>
+<div><label>New duration (µs)</label><input id="fuelNewDur" type="number" placeholder="e.g. 1600"></div>
+<div><label>New rail (bar)</label><input id="fuelNewRail" type="number" placeholder="e.g. 1450"></div>
+<div><label>Duration unit</label><select id="fuelUnit"><option value="us">Microseconds (µs)</option><option value="ms">Milliseconds (ms)</option></select></div>
+</div>
+<div class="actions"><button id="fuelCalc">Estimate comparison</button></div>
+<div id="fuelResult" class="results"></div>
+<div class="notice warn">This simplified model is only a rough comparison, not a calibrated injector model. Real delivery is not perfectly linear, and rail pressure does not by itself establish injected quantity. Verify with correct injector data and logs.</div>
+</div>
+
+<div class="card span6">
+<h2>2. Map smoothness checker</h2>
+<p class="sub">Paste one map grid. The tool highlights large jumps between adjacent cells for review; it does not automatically decide that a cell is wrong.</p>
+<div class="fields"><div><label>Map values (rows/columns)</label><textarea id="smoothGrid" placeholder="Paste numeric cells from a map&#10;10 11 12 13&#10;12 13 14 15&#10;14 15 16 17"></textarea></div><div><label>Flag jumps greater than</label><input id="smoothThreshold" type="number" value="5" step="any"><p class="sub">Use a threshold that makes sense for this map's units and scale.</p><label>Display decimals</label><select id="smoothDec"><option>0</option><option selected>2</option><option>3</option><option>4</option></select></div></div>
+<div class="actions"><button id="smoothRun">Check map</button><button class="secondary" id="smoothCopy">Copy flagged cells</button></div>
+<div id="smoothSummary" class="results"></div><div id="smoothOut" class="notice">Paste a numeric grid to begin.</div>
+</div>
+
+<div class="card span6">
+<h2>3. Map relationship checker</h2>
+<p class="sub">Compare values at the same operating point. Enter values from maps with matching RPM/load axes and compatible units.</p>
+<div class="notice"><b>Example:</b> if Driver Wish requests 75 mg/stroke and the active IQ limiter permits 68 mg/stroke at the same point, the smaller limit may constrain the request. Real ECU strategies can include other limiters and conversions.</div>
+<div class="fields three">
+<div><label>Operating point (RPM)</label><input id="relRpm" type="number" placeholder="e.g. 2500"></div>
+<div><label>Driver Wish (mg/stroke)</label><input id="relWish" type="number" placeholder="Optional"></div>
+<div><label>Torque / IQ limiter (mg/stroke)</label><input id="relLimit" type="number" placeholder="Optional"></div>
+<div><label>Smoke / air limiter (mg/stroke)</label><input id="relAirLimit" type="number" placeholder="Optional"></div>
+<div><label>Duration map coverage (mg/stroke)</label><input id="relDurMax" type="number" placeholder="Optional"></div>
+<div><label>Other active limit (mg/stroke)</label><input id="relOther" type="number" placeholder="Optional"></div>
+</div>
+<div class="actions"><button id="relCalc">Compare values</button><button class="secondary" id="relClear">Clear</button></div>
+<div id="relResult" class="results"></div><div id="relNotes" class="notice">Only compare values that have been converted to the same quantity and units.</div>
+</div>
+
+<div class="card span6">
+<h2>4. Guided input mode</h2>
+<p class="sub">Plain-language reminders for common fields. Choose a calculator and see what each input means.</p>
+<div class="fields"><div><label>Calculator</label><select id="guideChoice"><option value="eoi">SOI / EOI</option><option value="extrap">Continue map values</option><option value="compare">Stock vs tuned map</option><option value="logs">Driving logs</option><option value="fuel">Fuel estimate</option><option value="smooth">Map smoothness checker</option><option value="relationship">Map relationship checker</option></select></div></div>
+<div id="guideOutput" class="notice"></div>
+</div>
+
+<div class="card span12">
+<h2>5. Calibration change report</h2>
+<p class="sub">Record what changed and why. Export a CSV report you can keep with the project. This report does not read or validate ECU binaries.</p>
+<div class="fields four">
+<div><label>Map name</label><input id="reportMap" placeholder="e.g. Driver Wish"></div>
+<div><label>Operating area</label><input id="reportArea" placeholder="e.g. 2000–3500 rpm"></div>
+<div><label>Stock value / range</label><input id="reportOri" placeholder="e.g. 60 mg/stroke"></div>
+<div><label>Modified value / range</label><input id="reportMod" placeholder="e.g. 68 mg/stroke"></div>
+<div><label>Reason for change</label><input id="reportReason" placeholder="What were you trying to correct?"></div>
+<div><label>Validation / evidence</label><input id="reportEvidence" placeholder="Logs, test result, measured data"></div>
+<div><label>Revision</label><input id="reportRevision" placeholder="e.g. v2"></div>
+<div><label>Notes / uncertainty</label><input id="reportNotes" placeholder="Scaling, unknowns, follow-up"></div>
+</div>
+<div class="actions"><button id="reportAdd">Add change to report</button><button class="secondary" id="reportExport">Export report CSV</button><button class="secondary" id="reportClear">Clear report</button></div>
+<div class="tablewrap" style="margin-top:12px"><table id="reportTable"><thead><tr><th>Map</th><th>Area</th><th>Stock</th><th>Modified</th><th>Reason</th><th>Evidence</th><th>Revision</th><th>Notes</th><th></th></tr></thead><tbody></tbody></table></div>
+</div>
+</div>
+</section>
+
+<div class="foot">Experimental map extender v3.7 with offline OCR prototype • Includes verified µs and ms to crank-angle conversions; formulas are estimates where stated; always confirm ECU-specific units and scaling. Offline single-file tool • No network calls • Keep a separate backup of original files • All results depend on the accuracy of the values and units entered.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat($(id).value);return Number.isFinite(v)?v:null};
+const fmt=(v,d=2)=>Number.isFinite(v)?v.toFixed(d):"—";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const metric=(label,value,unit="")=>`<div class="metric"><small>${label}</small><strong>${value}</strong><em>${unit}</em></div>`;
+const round=(v,d)=>Number.isFinite(v)?Number(v.toFixed(d)):v;
+let eoiRows=[],logRows=[],lastExtrap="",lastTrend="",lastDiff="";
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));if(b.dataset.tab==="eoi")drawEoi();if(b.dataset.tab==="logs")drawLogs();}));
+function durationDeg(d,rpm,unit){if(d==null||rpm==null||!Number.isFinite(d)||!Number.isFinite(rpm)||rpm<=0)return NaN;if(unit==="deg")return d;if(unit==="ms")return d*rpm*6/1000;return d*rpm*6/1000000;}
+function soiToBtdc(v, convention){if(v==null)return NaN;return convention==="signed"?-v:v;}
+function eoiFromSoi(durationDegrees, soiValue, convention){const btdc=soiToBtdc(soiValue,convention);return durationDegrees-btdc;}
+function targetSoiValue(durationDegrees,targetEoi,convention){const btdc=durationDegrees-targetEoi;return convention==="signed"?-btdc:btdc;}
+function calculateEoi(){let rpm=num("rpm"),od=num("oriDur"),d=num("dur"),os=num("oriSoi"),ms=num("modSoi"),unit=$("durUnit").value,conv=$("soiConvention").value;let odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let oe=eoiFromSoi(odeg,os,conv),me=eoiFromSoi(mdeg,ms,conv);let target=num("targetEoi");let required=Number.isFinite(mdeg)&&target!=null?targetSoiValue(mdeg,target,conv):null; $("eoiResults").innerHTML=[metric("Stock duration in crank angle",fmt(odeg),"°"),metric("Tuned duration in crank angle",fmt(mdeg),"°"),metric("Stock EOI",fmt(oe),"° relative to TDC"),metric("Tuned EOI",fmt(me),"° relative to TDC"),metric("EOI change",fmt(me-oe),"° (negative = earlier)"),metric("SOI for target EOI",required==null?"—":fmt(required),conv==="signed"?"signed ° (BTDC negative)":"° BTDC, positive")].join("");let rr=num("railReq"),ra=num("railAct"),br=num("boostReq"),ba=num("boostAct");$("contextResults").innerHTML=[metric("Rail actual − requested",ra==null||rr==null?"—":fmt(ra-rr,0),"bar"),metric("Boost actual − requested",ba==null||br==null?"—":fmt(ba-br,0),"mbar"),metric("MAF actual",num("maf")==null?"—":fmt(num("maf"),1),"mg/stroke")].join("");drawEoi();}
+$("calcEoi").onclick=calculateEoi;
+function addEoiRow(){let rpm=num("rpm"),od=num("oriDur"),d=num("dur"),unit=$("durUnit").value,conv=$("soiConvention").value,odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let os=num("oriSoi"),ms=num("modSoi");if([rpm,od,d,odeg,mdeg,os,ms].some(x=>x==null||!Number.isFinite(x))||rpm<=0||od<0||d<0){alert("Enter valid positive RPM, non-negative durations, stock SOI and tuned SOI. Confirm duration units and SOI sign convention.");return}eoiRows.push({rpm,iq:num("iq"),oriIq:num("oriIq"),oriDur:odeg,dur:mdeg,ori:eoiFromSoi(odeg,os,conv),mod:eoiFromSoi(mdeg,ms,conv),railStock:num("railStock"),railReq:num("railReq"),railAct:num("railAct"),boostReq:num("boostReq"),boostAct:num("boostAct"),maf:num("maf"),note:$("pointNote").value});renderEoiTable();drawEoi();$("sessionStatus").textContent=`Added EOI point at ${rpm} rpm.`}
+$("addEoi").onclick=addEoiRow;$("clearEoi").onclick=()=>{eoiRows=[];renderEoiTable();drawEoi()};
+function renderEoiTable(){let body=$("eoiTable").querySelector("tbody");body.innerHTML=eoiRows.map((r,i)=>`<tr><td>${r.rpm}</td><td>${r.oriIq??"—"}</td><td>${r.iq??"—"}</td><td>${fmt(r.oriDur??r.dur)}</td><td>${fmt(r.dur)}</td><td>${fmt(r.ori)}</td><td>${fmt(r.mod)}</td><td>${r.railAct==null||r.railReq==null?"—":fmt(r.railAct-r.railReq,0)}</td><td>${r.boostAct==null||r.boostReq==null?"—":fmt(r.boostAct-r.boostReq,0)}</td><td><button class="danger" data-del-eoi="${i}">×</button></td></tr>`).join("");body.querySelectorAll("[data-del-eoi]").forEach(b=>b.onclick=()=>{eoiRows.splice(+b.dataset.delEoi,1);renderEoiTable();drawEoi()})}
+function drawChart(canvasId,series,yLabel){let c=$(canvasId),ctx=c.getContext("2d"),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#0a1220";ctx.fillRect(0,0,w,h);let all=series.flatMap(s=>s.data.filter(p=>Number.isFinite(p.y)).map(p=>p.y));if(!all.length){ctx.fillStyle="#a5b4ce";ctx.font="14px sans-serif";ctx.fillText("Add data points to display chart",22,30);return}let min=Math.min(...all),max=Math.max(...all);if(min===max){min-=1;max+=1}let pad={l:55,r:18,t:20,b:35},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;ctx.strokeStyle="#24334c";ctx.fillStyle="#a5b4ce";ctx.font="11px sans-serif";for(let i=0;i<=4;i++){let y=pad.t+ph*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(fmt(max-(max-min)*i/4,1),5,y+4)}let xVals=[...new Set(series.flatMap(s=>s.data.map(p=>p.x)).filter(Number.isFinite))].sort((a,b)=>a-b);let xmin=xVals.length?Math.min(...xVals):0,xmax=xVals.length?Math.max(...xVals):1;if(xmin===xmax)xmax=xmin+1;ctx.fillText(String(xmin),pad.l,h-12);ctx.fillText(String(xmax),w-pad.r-30,h-12);series.forEach((s,si)=>{ctx.strokeStyle=["#70b7ff","#65d6a4","#ffc56b","#ff8585"][si%4];ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=2;ctx.beginPath();let started=false;s.data.forEach(p=>{if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return;let x=pad.l+(p.x-xmin)/(xmax-xmin)*pw,y=pad.t+(max-p.y)/(max-min)*ph;if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)});ctx.stroke();s.data.forEach(p=>{if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return;let x=pad.l+(p.x-xmin)/(xmax-xmin)*pw,y=pad.t+(max-p.y)/(max-min)*ph;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()});ctx.fillText(s.name,pad.l+si*150,pad.t+12)});}
+function drawEoi(){drawChart("eoiChart",[{name:"ORI EOI",data:eoiRows.map(r=>({x:r.rpm,y:r.ori}))},{name:"MOD EOI",data:eoiRows.map(r=>({x:r.rpm,y:r.mod}))}],"EOI")}
+$("exportEoi").onclick=()=>downloadCsv("eoi_points.csv",["rpm","stock_iq_mg_stroke","tuned_iq_mg_stroke","stock_duration_degrees","tuned_duration_degrees","stock_eoi","tuned_eoi","stock_rail_bar","tuned_rail_requested_bar","tuned_rail_actual_bar","boost_requested_mbar_abs","boost_actual_mbar_abs","maf_mg_stroke","notes"],eoiRows.map(r=>[r.rpm,r.oriIq,r.iq,r.oriDur,r.dur,r.ori,r.mod,r.railStock,r.railReq,r.railAct,r.boostReq,r.boostAct,r.maf,r.note]));
+function parseNumbers(s){const tokens=s.trim().split(/[\s,;]+/).filter(Boolean);if(!tokens.length)return [];const vals=tokens.map(x=>Number(x));return vals.every(Number.isFinite)?vals:[]}
+$("runExtrap").onclick=()=>{let p=num("exPrev"),l=num("exLast"),m=num("exMult")??1,pct=num("exPct"),n=Math.max(1,Math.min(100,Math.floor(num("exCount")||1))),d=+$("exDec").value;if(p==null||l==null||!Number.isFinite(m)||!Number.isFinite(n)||n<1||(pct!=null&&pct<=-100)){ $("extrapOut").textContent="Enter valid previous/last values, a finite multiplier, 1–100 future points, and percentage change greater than −100%.";return}let step=l-p,vals=[];for(let i=1;i<=n;i++){let v=pct!=null?l*Math.pow(1+pct/100,i):l+step*m*i;vals.push(round(v,d))}lastExtrap=vals.join("\t");$("extrapOut").textContent=`Observed step: ${fmt(step,d)}\nRule: ${pct!=null?"percentage change":"last + (last − previous) × multiplier"}\nPredictions: ${vals.join("   ")}`;$("extrapResults").innerHTML=[metric("Last known",fmt(l,d)),metric("Linear step",fmt(step*m,d)),metric("Next value",fmt(vals[0],d)),metric("Last prediction",fmt(vals.at(-1),d))].join("")};
+$("copyExtrap").onclick=()=>copyText(lastExtrap);
+$("runInterp").onclick=()=>{let x1=num("ix1"),y1=num("iy1"),x2=num("ix2"),y2=num("iy2"),x=num("ix"),d=+$("idec").value;if([x1,y1,x2,y2,x].some(v=>v==null)||x1===x2){$("interpResult").innerHTML=metric("Result","Invalid","X₁ and X₂ must differ");return}let y=y1+(x-x1)*(y2-y1)/(x2-x1);$("interpResult").innerHTML=[metric("Interpolated Y",fmt(y,d)),metric("Position",fmt((x-x1)/(x2-x1)*100,1),"% of interval"),metric("Method",x>=Math.min(x1,x2)&&x<=Math.max(x1,x2)?"Interpolation":"Extrapolation")].join("")};
+function regression(vals){let n=vals.length,xbar=(n-1)/2,ybar=vals.reduce((a,b)=>a+b,0)/n,nume=0,den=0;for(let i=0;i<n;i++){nume+=(i-xbar)*(vals[i]-ybar);den+=(i-xbar)**2}let slope=den?nume/den:0;return {slope,intercept:ybar-slope*xbar}}
+$("runTrend").onclick=()=>{let vals=parseNumbers($("trendValues").value),n=Math.max(1,Math.min(100,Math.floor(num("trendCount")||1))),d=+$("trendDec").value;if(vals.length<2){$("trendResult").textContent="Enter at least two values.";return}let {slope,intercept}=regression(vals),pred=Array.from({length:n},(_,i)=>round(intercept+slope*(vals.length+i),d));lastTrend=pred.join("\t");$("trendResult").textContent=`Values: ${vals.length} • Fitted step: ${fmt(slope,d)} per row • Predictions: ${pred.join("   ")}\nThis smooths the full sequence; it may differ from simple last-minus-previous extrapolation.`};
+$("copyTrend").onclick=()=>copyText(lastTrend);
+function runDelta(){let a=num("deltaA"),b=num("deltaB");if(a==null||b==null)return;$("deltaResult").innerHTML=[metric("Absolute delta",fmt(b-a,3)),metric("Relative change",a===0?"—":fmt((b-a)/Math.abs(a)*100,2),"% of |original|"),metric("Ratio",a===0?"—":fmt(b/a,4),"MOD / ORI")].join("")} $("runDelta").onclick=runDelta;runDelta();
+function parseGrid(text){return text.trim().split(/\n+/).map(line=>line.trim().split(/[\t ,;]+/).filter(Boolean).map(Number))}
+$("compareMaps").onclick=()=>{let a=parseGrid($("mapA").value),b=parseGrid($("mapB").value),d=+$("mapDec").value,mode=$("mapMode").value;if(!a.length||!b.length||a.some(r=>r.some(v=>!Number.isFinite(v)))||b.some(r=>r.some(v=>!Number.isFinite(v)))){$("mapDiffOut").textContent="Could not parse every cell as a number.";return}if(a.length!==b.length||a.some((r,i)=>r.length!==b[i]?.length)){$("mapDiffOut").textContent="Grid dimensions do not match. Make sure both maps have the same rows and columns.";return}let diffs=a.map((r,i)=>r.map((v,j)=>mode==="delta"?b[i][j]-v:mode==="percent"?(v===0?NaN:(b[i][j]-v)/Math.abs(v)*100):(v===0?NaN:b[i][j]/v)));lastDiff=diffs.map(r=>r.map(v=>Number.isFinite(v)?v.toFixed(d):"NA").join("\t")).join("\n");let flat=diffs.flat().filter(Number.isFinite),max=flat.length?Math.max(...flat):NaN,min=flat.length?Math.min(...flat):NaN,changed=diffs.flat().filter(v=>Number.isFinite(v)&&Math.abs(v)>1e-10).length;$("mapSummary").innerHTML=[metric("Grid size",`${a.length} × ${a[0].length}`,"rows × columns"),metric("Changed cells",changed,`${Math.round(changed/diffs.flat().length*100)}% of cells`),metric("Minimum",fmt(min,d)),metric("Maximum",fmt(max,d))].join("");$("mapDiffOut").textContent=lastDiff};
+$("copyMapDiff").onclick=()=>copyText(lastDiff);
+$("cleanNumbers").onclick=()=>{let txt=$("cleanInput").value;let nums=txt.match(/[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g)||[];let d=+$("cleanDec").value;let vals=nums.map(Number).filter(Number.isFinite).map(v=>v.toFixed(d));let sep={tab:"\t",comma:", ",space:" ",newline:"\n"}[$("cleanSep").value];$("cleanOutput").value=vals.join(sep)};
+$("copyClean").onclick=()=>copyText($("cleanOutput").value);
+function addLogRow(r={}){logRows.push({rpm:r.rpm??"",br:r.br??"",ba:r.ba??"",rr:r.rr??"",ra:r.ra??"",maf:r.maf??"",iq:r.iq??"",note:r.note??""});renderLogs()}
+function renderLogs(){let body=$("logTable").querySelector("tbody");body.innerHTML=logRows.map((r,i)=>`<tr>${["rpm","br","ba","rr","ra","maf","iq","note"].map(k=>`<td><input data-log="${i}" data-key="${k}" value="${esc(r[k])}" ${k==="note"?'placeholder="Optional"':''}></td>`).join("")}<td><button class="danger" data-logdel="${i}">×</button></td></tr>`).join("");body.querySelectorAll("[data-log]").forEach(inp=>inp.onchange=()=>{logRows[+inp.dataset.log][inp.dataset.key]=inp.value===""?"":(inp.dataset.key==="note"?inp.value:Number(inp.value));});body.querySelectorAll("[data-logdel]").forEach(b=>b.onclick=()=>{logRows.splice(+b.dataset.logdel,1);renderLogs()})}
+$("addLog").onclick=()=>addLogRow();$("sampleLog").onclick=()=>{logRows=[];[[1500,2100,2050,1300,1290,850,65],[2000,2300,2200,1400,1370,900,75],[2500,2460,2380,1450,1430,950,85],[3000,2460,2440,1450,1445,1000,85],[3500,2400,2380,1400,1390,980,80]].forEach(r=>addLogRow({rpm:r[0],br:r[1],ba:r[2],rr:r[3],ra:r[4],maf:r[5],iq:r[6]}));$("logFlags").innerHTML="Example data loaded; replace it with real logs.";};
+$("analyzeLog").onclick=()=>{let rows=logRows.map(r=>Object.fromEntries(Object.entries(r).map(([k,v])=>[k,k==="note"?v:(v===""?null:Number(v))]))).filter(r=>r.rpm!=null);let bd=rows.filter(r=>r.br!=null&&r.ba!=null).map(r=>r.ba-r.br),rd=rows.filter(r=>r.rr!=null&&r.ra!=null).map(r=>r.ra-r.rr);let avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:NaN,maxabs=a=>a.length?Math.max(...a.map(Math.abs)):NaN;$("logSummary").innerHTML=[metric("Rows with RPM",rows.length),metric("Avg boost error",fmt(avg(bd),0),"mbar actual − requested"),metric("Max |boost error|",fmt(maxabs(bd),0),"mbar"),metric("Avg rail error",fmt(avg(rd),0),"bar actual − requested"),metric("Max |rail error|",fmt(maxabs(rd),0),"bar")].join("");let flags=[];if(!bd.length)flags.push(["Boost","No requested/actual boost pairs supplied."]);else if(maxabs(bd)>200)flags.push(["Boost tracking","Large difference appears in at least one row; inspect operating conditions and logger units."]);if(!rd.length)flags.push(["Rail","No requested/actual rail pairs supplied."]);else if(maxabs(rd)>100)flags.push(["Rail tracking","Large difference appears in at least one row; confirm units, transient state and sensor data."]);if(rows.length<3)flags.push(["Coverage","Few RPM points: add more repeatable data before interpreting trends."]);if(!flags.length)flags.push(["Data coverage","No simple threshold flags triggered; this is not proof of correct calibration."]);$("logFlags").innerHTML=flags.map(([a,b])=>`<div class="checkrow"><b>${a}</b><br><span>${b}</span></div>`).join("");drawLogs()};
+function drawLogs(){const val=v=>v==null||v===""?NaN:Number(v);let rows=logRows.map(r=>({x:val(r.rpm),br:val(r.br),ba:val(r.ba),rr:val(r.rr),ra:val(r.ra)}));drawChart("boostChart",[{name:"Boost req",data:rows.filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.br)).map(r=>({x:r.x,y:r.br}))},{name:"Boost actual",data:rows.filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.ba)).map(r=>({x:r.x,y:r.ba}))}],"mbar");drawChart("railChart",[{name:"Rail req",data:rows.filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.rr)).map(r=>({x:r.x,y:r.rr}))},{name:"Rail actual",data:rows.filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.ra)).map(r=>({x:r.x,y:r.ra}))}],"bar")}
+$("exportLog").onclick=()=>downloadCsv("ecu_log_analysis.csv",["rpm","boost_requested_mbar_abs","boost_actual_mbar_abs","rail_requested_bar","rail_actual_bar","maf_mg_stroke","iq_mg_stroke","notes"],logRows.map(r=>[r.rpm,r.br,r.ba,r.rr,r.ra,r.maf,r.iq,r.note]));
+const unitGroups={bar:{bar:1,mpa:.1,kpa:100,mbar:1000,psi:14.5037738},time:{us:1,ms:.001},fuel:{mg:1,g:.001}};
+function unitGroup(u){return ["bar","mpa","kpa","mbar","psi"].includes(u)?"bar":["us","ms"].includes(u)?"time":["mg","g","mm3"].includes(u)?"fuel":u}
+$("convertUnit").onclick=()=>{let v=num("unitVal"),f=$("unitFrom").value,t=$("unitTo").value,d=+$("unitDec").value;if(v==null)return;let density=num("dieselDensity");let out;if(f===t)out=v;else if(["mg","g","mm3"].includes(f)&&["mg","g","mm3"].includes(t)){if(density==null||density<=0||density>2){$("unitResult").innerHTML=metric("Conversion","Check density","Enter a plausible positive density in mg/mm³ (0–2).");return}let mg=f==="mg"?v:f==="g"?v*1000:v*density;out=t==="mg"?mg:t==="g"?mg/1000:mg/density;}else if(unitGroup(f)!==unitGroup(t)){$("unitResult").innerHTML=metric("Conversion","Not compatible","Choose units from the same group");return}else{let g=unitGroups[unitGroup(f)];out=v/g[f]*g[t]}$("unitResult").innerHTML=[metric("Converted value",fmt(out,d),t),metric("Input",fmt(v,d),f),...(["mg","g","mm3"].includes(f)&&["mg","g","mm3"].includes(t)?[metric("Density used",fmt(density,3),"mg/mm³")]:[])].join("")};
+function convertTime(){let v=num("timeVal"),r=num("timeRpm"),u=$("timeUnit").value;if(v==null||r==null||r<=0)return;let deg=durationDeg(v,r,u);$("timeResult").innerHTML=[metric("Crank angle",fmt(deg,3),"degrees"),metric("Equivalent time",fmt(u==="us"?v/1000:v*1000,3),u==="us"?"ms":"µs"),metric("Engine speed",fmt(r,0),"rpm")].join("")}$("convertTime").onclick=convertTime;
+$("calcPower").onclick=()=>{let t=num("torque"),r=num("powerRpm");if(t==null||r==null)return;let kw=t*r/9549.2966; $("powerResult").innerHTML=[metric("Power",fmt(kw,2),"kW"),metric("Metric horsepower",fmt(kw*1.3596216,1),"PS"),metric("Mechanical horsepower",fmt(kw*1.3410221,1),"hp")].join("")};
+$("calcPressure").onclick=()=>{let a=num("absBoost"),amb=num("ambient");if(a==null||amb==null||a<0||amb<=0){$("pressureResult").innerHTML=metric("Invalid input","Enter non-negative absolute pressure and ambient pressure greater than zero");return}$("pressureResult").innerHTML=[metric("Gauge boost",fmt(a-amb,0),"mbar gauge"),metric("Gauge boost",fmt((a-amb)/1000,3),"bar gauge"),metric("Pressure ratio",fmt(a/amb,3),"absolute / ambient")].join("")};
+function downloadCsv(name,headers,rows){let csv=[headers,...rows].map(row=>row.map(v=>{let s=v==null?"":String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(",")).join("\r\n");let blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
+function copyText(s){if(!s){alert("Nothing to copy yet.");return}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>{$("sessionStatus").textContent="Copied to clipboard."}).catch(()=>fallbackCopy(s));else fallbackCopy(s)}
+function fallbackCopy(s){let ta=document.createElement("textarea");ta.value=s;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove()}
+function projectData(){return {version:3,reportRows,project:{vehicle:$("vehicle").value,ecu:$("ecu").value,hardware:$("hardware").value,revision:$("revision").value,notes:$("projectNotes").value},eoiRows,logRows,inputs:Object.fromEntries(["rpm","oriDur","dur","durUnit","soiConvention","oriSoi","modSoi","targetEoi","oriIq","iq","railStock","railReq","railAct","boostReq","boostAct","maf","pointNote"].map(id=>[id,$(id).value]))}}
+$("saveProject").onclick=()=>{let data=JSON.stringify(projectData(),null,2),blob=new Blob([data],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=($("vehicle").value||"ecu_project").replace(/[^a-z0-9_-]/gi,"_")+"_session.json";a.click();URL.revokeObjectURL(url);$("sessionStatus").textContent="Session JSON exported."};
+$("loadProjectBtn").onclick=()=>$("loadProjectFile").click();
+$("loadProjectFile").onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let data=JSON.parse(await file.text());let p=data.project||{};for(let [k,id] of [["vehicle","vehicle"],["ecu","ecu"],["hardware","hardware"],["revision","revision"],["notes","projectNotes"]])$(id).value=p[k]||"";for(let [id,v] of Object.entries(data.inputs||{}))if($(id))$(id).value=v;eoiRows=Array.isArray(data.eoiRows)?data.eoiRows:[];logRows=Array.isArray(data.logRows)?data.logRows:[];reportRows=Array.isArray(data.reportRows)?data.reportRows:[];renderReport();renderEoiTable();renderLogs();calculateEoi();drawLogs();$("sessionStatus").textContent="Session loaded."; }catch(err){alert("Could not load session JSON: "+err.message)}e.target.value=""};
+$("exportAllCsv").onclick=()=>$("exportEoi").click();
+$("resetAll").onclick=()=>{if(!confirm("Clear EOI points, logs and calculator inputs?"))return;eoiRows=[];logRows=[];renderEoiTable();renderLogs();["rpm","oriDur","dur","oriSoi","modSoi","targetEoi","oriIq","iq","railStock","railReq","railAct","boostReq","boostAct","maf","pointNote"].forEach(id=>$(id).value="");$("eoiResults").innerHTML="";$("contextResults").innerHTML="";$("logSummary").innerHTML="";$("logFlags").innerHTML="";drawEoi();drawLogs();$("sessionStatus").textContent="Calculations reset."};
+addLogRow();calculateEoi();$("runExtrap").click();$("runInterp").click();$("runTrend").click();drawLogs();
+
+// Extra tuning helpers
+let reportRows=[];
+function setMetrics(id,items){$(id).innerHTML=items.join("")}
+$("fuelCalc").onclick=()=>{
+ const bi=num("fuelBaseIq"),bd=num("fuelBaseDur"),br=num("fuelBaseRail"),nd=num("fuelNewDur"),nr=num("fuelNewRail"),u=$("fuelUnit").value;
+ if([bi,bd,br,nd,nr].some(v=>v==null)||bi<=0||bd<=0||br<=0||nd<=0||nr<=0){$("fuelResult").innerHTML=metric("Missing values","Enter all five values");return}
+ const bdur=u==="ms"?bd*1000:bd,ndur=u==="ms"?nd*1000:nd;
+ const ratio=(ndur/bdur)*Math.sqrt(nr/br),est=bi*ratio;
+ $("fuelResult").innerHTML=[metric("Duration ratio",fmt(ndur/bdur,3),"new / baseline"),metric("Rail pressure ratio",fmt(nr/br,3),"new / baseline"),metric("Simplified delivery ratio",fmt(ratio,3),"estimated"),metric("Rough equivalent IQ",fmt(est,1),"mg/stroke • not measured")].join("");
+};
+let smoothText="";
+$("smoothRun").onclick=()=>{
+ let rows=parseGrid($("smoothGrid").value),thr=num("smoothThreshold"),d=+$("smoothDec").value;
+ if(thr==null||thr<0||!rows.length||rows.some(r=>!r.length||r.some(v=>!Number.isFinite(v)))){$("smoothOut").textContent="Enter a numeric grid and a non-negative jump threshold.";return}
+ let flags=[];
+ for(let i=0;i<rows.length;i++)for(let j=0;j<rows[i].length;j++){
+  if(j>0){let delta=rows[i][j]-rows[i][j-1];if(Math.abs(delta)>thr)flags.push({r:i+1,c:j+1,dir:"left → cell",a:rows[i][j-1],b:rows[i][j],delta})}
+  if(i>0&&rows[i].length===rows[i-1].length){let delta=rows[i][j]-rows[i-1][j];if(Math.abs(delta)>thr)flags.push({r:i+1,c:j+1,dir:"above → cell",a:rows[i-1][j],b:rows[i][j],delta})}
+ }
+ smoothText=flags.map(f=>`row ${f.r}, col ${f.c}: ${f.dir}; ${fmt(f.a,d)} → ${fmt(f.b,d)} (Δ ${fmt(f.delta,d)})`).join("\n");
+ $("smoothSummary").innerHTML=[metric("Rows",rows.length),metric("Columns",Math.max(...rows.map(r=>r.length))),metric("Flagged jumps",flags.length),metric("Threshold",fmt(thr,d),"absolute difference")].join("");
+ $("smoothOut").textContent=flags.length?smoothText:"No adjacent jumps exceeded your threshold. This does not prove the map is correct.";
+};
+$("smoothCopy").onclick=()=>copyText(smoothText);
+$("relCalc").onclick=()=>{
+ const wish=num("relWish");
+ const limits=[["Torque / IQ limiter",num("relLimit")],["Smoke / air limiter",num("relAirLimit")],["Other active limit",num("relOther")]].filter(x=>x[1]!=null);
+ const dur=num("relDurMax");
+ if(wish==null&&!limits.length){$("relResult").innerHTML=metric("No data","Enter Driver Wish or at least one limiter value");return}
+ const minLimit=limits.length?Math.min(...limits.map(v=>v[1])):null;
+ const limiter=limits.filter(v=>v[1]===minLimit).map(v=>v[0]).join(" / ");
+ const requestedAfterEnteredLimits=wish==null?null:limits.length?Math.min(wish,minLimit):wish;
+ let htmlOut=[metric("Driver Wish",wish==null?"—":fmt(wish,2),"mg/stroke"),metric("Lowest entered limiter",minLimit==null?"—":fmt(minLimit,2),limiter||"No limiter entered"),metric("Estimated request after entered limits",requestedAfterEnteredLimits==null?"—":fmt(requestedAfterEnteredLimits,2),"mg/stroke • simplified only"),metric("Duration map coverage",dur==null?"—":fmt(dur,2),"mg/stroke")];
+ if(wish!=null&&minLimit!=null)htmlOut.push(metric("Wish above lowest limiter",fmt(wish-minLimit,2),"mg/stroke"));
+ $("relResult").innerHTML=htmlOut.join("");
+ let note="This is a simplified manual comparison, not a full ECU limiter model. Only the entered limits are considered; actual ECU strategies, conversions, map axes, hysteresis and other limiters may change the result.";
+ if(dur!=null&&requestedAfterEnteredLimits!=null&&requestedAfterEnteredLimits>dur)note+=" The estimated request exceeds the stated duration-map coverage; verify that the duration map supports that quantity.";
+ $("relNotes").textContent=note;
+};
+$("relClear").onclick=()=>{["relRpm","relWish","relLimit","relAirLimit","relDurMax","relOther"].forEach(id=>$(id).value="");$("relResult").innerHTML="";$("relNotes").textContent="Only compare values that have been converted to the same quantity and units."};
+const guideTexts={
+ eoi:"<b>SOI / EOI:</b> RPM comes from the operating point. Duration comes from the duration map, with units confirmed from the map definition. Stock SOI is read from the original file; tuned SOI is read from the modified file. Do not assume raw values are microseconds or degrees without checking scaling.",
+ extrap:"<b>Continue map values:</b> enter the last two cells in the direction you want to extend. The tool repeats the difference between them. Example: 41 then 40 gives 39 next. This is a mathematical guess, not a map-tuning rule.",
+ compare:"<b>Stock vs tuned map:</b> paste numeric cells from the same map in both files. Keep rows and columns aligned. The difference output is modified minus original. Do not include axis labels in one grid but not the other.",
+ logs:"<b>Driving logs:</b> use readings from the same timestamp / RPM row. Requested is the ECU target; actual is what the sensor reports. Boost inputs are absolute mbar in this tool, so convert gauge readings before entering them.",
+ fuel:"<b>Fuel estimate:</b> requires a known baseline IQ, duration and rail pressure plus the new duration and rail pressure. The estimate uses a simplified model and should never replace injector data or measured/logged validation.",
+ smooth:"<b>Map smoothness checker — what to enter:</b><br>1. Copy only the numeric cells from one map and paste them into the large box. Keep each map row on a separate line.<br>2. Set “Flag jumps greater than” to the biggest cell-to-cell change you want to review. For example, a threshold of 5 flags adjacent values that differ by more than 5.<br>3. Press <b>Check map</b>. The result shows how many jumps were flagged and lists the row, column, direction and difference.<br><br><b>What it means:</b> a flag is only a prompt to inspect that area. Sharp changes can be intentional, and a smooth-looking map can still be wrong. Choose a threshold appropriate to that map’s units and scale.",
+ relationship:"<b>Map relationship checker — what to enter:</b><br>1. Choose one operating point, such as 2500 RPM, and read values at that same point from the relevant maps. Make sure the axes and units line up; values from different RPM/load cells are not directly comparable.<br>2. Enter Driver Wish if available, then enter the relevant IQ limits you have identified, such as a torque/IQ limiter, smoke/air limiter, or another active limit. These fields are optional if you do not have that map.<br>3. Enter “Duration map coverage” only if you know the highest fuel quantity represented by the duration map. Then press <b>Compare values</b>.<br><br><b>How to read it:</b> the tool shows the lowest of the limiter values you entered and compares Driver Wish with it. A lower limit may constrain the request, but the real ECU can use other limiters, conversions and control logic. This is a quick manual cross-check, not a full ECU simulation."
+};
+function updateGuide(){$("guideOutput").innerHTML=guideTexts[$("guideChoice").value]||""}
+$("guideChoice").onchange=updateGuide;updateGuide();
+function renderReport(){
+ const body=$("reportTable").querySelector("tbody");
+ body.innerHTML=reportRows.map((r,i)=>`<tr>${["map","area","ori","mod","reason","evidence","revision","notes"].map(k=>`<td>${esc(r[k])}</td>`).join("")}<td><button class="danger" data-report-del="${i}">×</button></td></tr>`).join("");
+ body.querySelectorAll("[data-report-del]").forEach(b=>b.onclick=()=>{reportRows.splice(+b.dataset.reportDel,1);renderReport()});
+}
+$("reportAdd").onclick=()=>{
+ const r={map:$("reportMap").value,area:$("reportArea").value,ori:$("reportOri").value,mod:$("reportMod").value,reason:$("reportReason").value,evidence:$("reportEvidence").value,revision:$("reportRevision").value,notes:$("reportNotes").value};
+ if(!r.map&&!r.ori&&!r.mod){alert("Enter at least a map name and/or values.");return}
+ reportRows.push(r);renderReport();
+ ["reportMap","reportArea","reportOri","reportMod","reportReason","reportEvidence","reportRevision","reportNotes"].forEach(id=>$(id).value="");
+};
+$("reportExport").onclick=()=>downloadCsv("calibration_change_report.csv",["map","operating_area","stock_value","modified_value","reason","validation_evidence","revision","notes"],reportRows.map(r=>[r.map,r.area,r.ori,r.mod,r.reason,r.evidence,r.revision,r.notes]));
+$("reportClear").onclick=()=>{if(confirm("Clear all report rows?")){reportRows=[];renderReport()}};
+
+
+// Screenshot-assisted full-map extension (offline image reference + editable grid)
+let mapShotRowsData=[],mapShotOutput=[],mapShotObjectUrl=null,mapShotZoom=1,mapShotOutputAxis=[];
+function mapShotAxisLabel(v){return Number(v).toLocaleString('en-US',{useGrouping:false,maximumFractionDigits:6});}
+function mapShotGetAxis(n){
+ const raw=$("mapShotAxis").value.trim();
+ const axis=raw.split(/[\s,;]+/).filter(Boolean).map(Number);
+ if(axis.length!==n||axis.some(v=>!Number.isFinite(v)))return null;
+ for(let i=1;i<axis.length;i++)if(axis[i]<=axis[i-1])return null;
+ return axis;
+}
+function mapShotBuildGrid(values=null){
+ const nr=Math.max(1,Math.min(80,Math.floor(Number($("mapShotRows").value)||1)));
+ const nc=Math.max(2,Math.min(40,Math.floor(Number($("mapShotCols").value)||2)));
+ $("mapShotRows").value=nr;$("mapShotCols").value=nc;
+ const currentAxis=mapShotGetAxis(nc);
+ if(!currentAxis){const step=Math.max(.001,Number($("mapShotAxisStep").value)||10);$("mapShotAxis").value=Array.from({length:nc},(_,i)=>Number((i*step).toFixed(6))).join(', ')}
+ mapShotRowsData=Array.from({length:nr},(_,r)=>Array.from({length:nc},(_,c)=>values?.[r]?.[c]??""));mapShotOutput=[];mapShotOutputAxis=[];
+ renderMapShotInput();$("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">Press Extend all rows to generate the preview.</p>';
+ $("mapShotStatus").textContent=`Ready for ${nr} map rows. Enter/check the mm³/stroke axis points before extending.`;
+}
+function renderMapShotInput(){
+ const nc=mapShotRowsData[0]?.length||2,axis=mapShotGetAxis(nc);
+ let html='<table class="mapshot-table"><thead><tr><th>Map row</th>'+Array.from({length:nc},(_,c)=>`<th>${axis?mapShotAxisLabel(axis[c])+' mm³':'Axis '+(c+1)}</th>`).join('')+'</tr></thead><tbody>';
+ mapShotRowsData.forEach((row,r)=>{html+=`<tr><th>${r+1}</th>`+row.map((v,c)=>`<td><input type="number" step="any" aria-label="Row ${r+1} axis ${axis?axis[c]+' mm3/stroke':c+1}" data-ms-r="${r}" data-ms-c="${c}" value="${esc(v)}"></td>`).join('')+'</tr>'});html+='</tbody></table>';
+ $("mapShotGridWrap").innerHTML=html;
+ $("mapShotGridWrap").querySelectorAll('[data-ms-r]').forEach(inp=>inp.addEventListener('change',()=>{mapShotRowsData[+inp.dataset.msR][+inp.dataset.msC]=inp.value===''?'':Number(inp.value);mapShotOutput=[];mapShotOutputAxis=[];}));
+}
+function readMapShotInputs(){const rows=mapShotRowsData.map(r=>r.slice());$("mapShotGridWrap").querySelectorAll('[data-ms-r]').forEach(inp=>{rows[+inp.dataset.msR][+inp.dataset.msC]=inp.value===''?'':Number(inp.value)});return rows;}
+$("mapShotBuild").onclick=()=>mapShotBuildGrid();
+$("mapShotFillExample").onclick=()=>{$("mapShotRows").value=4;$("mapShotCols").value=5;$("mapShotAxis").value='0, 10, 20, 30, 40';$("mapShotAxisStep").value=10;mapShotBuildGrid([[40,39,38,37,36],[55,54,52,50,48],[68,67,65,62,59],[72,71,69,66,62]]);$("mapShotStatus").textContent='Example loaded. Axis values are examples only; replace them with your real StageX mm³/stroke axis before using real map data.';};
+$("mapShotClear").onclick=()=>mapShotBuildGrid();
+$("mapShotAxis").addEventListener('change',()=>{renderMapShotInput();mapShotOutput=[];mapShotOutputAxis=[];$("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">Axis changed. Press Extend all rows to regenerate the preview.</p>';});
+$("mapShotCols").addEventListener('change',()=>{const n=Math.max(2,Math.min(40,Math.floor(Number($("mapShotCols").value)||2)));const step=Math.max(.001,Number($("mapShotAxisStep").value)||10);$("mapShotAxis").value=Array.from({length:n},(_,i)=>Number((i*step).toFixed(6))).join(', ');});
+$("mapShotFile").addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(mapShotObjectUrl)URL.revokeObjectURL(mapShotObjectUrl);mapShotObjectUrl=URL.createObjectURL(f);const img=$("mapShotImage");img.src=mapShotObjectUrl;img.classList.remove('hide');img.style.display='block';img.style.width='100%';img.style.maxWidth='100%';img.style.transform='none';img.style.maxHeight='75vh';mapShotZoom=1;$("mapShotImageEmpty").classList.add('hide');$("mapShotStatus").textContent=`Loaded screenshot: ${f.name}. Read the axis values from the image and enter them above.`;});
+function applyMapShotZoom(){const img=$("mapShotImage");img.style.width=(mapShotZoom*100)+'%';img.style.maxWidth='none';img.style.maxHeight='none';img.style.height='auto';}
+$("mapShotZoomIn").onclick=()=>{mapShotZoom=Math.min(3,mapShotZoom+.25);applyMapShotZoom()};$("mapShotZoomOut").onclick=()=>{mapShotZoom=Math.max(.5,mapShotZoom-.25);applyMapShotZoom()};$("mapShotFit").onclick=()=>{mapShotZoom=1;const img=$("mapShotImage");img.style.width='100%';img.style.maxWidth='100%';img.style.maxHeight='75vh';img.style.height='auto'};
+$("mapShotExtend").onclick=()=>{
+ const src=readMapShotInputs(),add=Math.max(1,Math.min(20,Math.floor(Number($("mapShotAddCols").value)||1))),dec=Number($("mapShotDecimals").value),method=$("mapShotMethod").value;
+ if(!src.length||src.some(r=>r.length<2||r.some(v=>v===''||!Number.isFinite(Number(v))))){$("mapShotStatus").textContent='Every source cell must contain a valid number. Fill all rows and try again.';return}
+ const axis=mapShotGetAxis(src[0].length),step=Number($("mapShotAxisStep").value);
+ if(!axis){$("mapShotStatus").textContent='Axis invalid: enter one strictly increasing numeric mm³/stroke value for every existing map column.';return}
+ if(!Number.isFinite(step)||step<=0){$("mapShotStatus").textContent='Enter a positive next-axis step in mm³/stroke.';return}
+ const suspiciousCells=src.flat().filter(v=>Math.abs(Number(v))>=100000);
+ if(suspiciousCells.length && !confirm(`Warning: ${suspiciousCells.length} source cell(s) are 100,000 or larger. This may indicate a missed decimal point. This build restores decimals by discarding the final two digits from integer-only OCR readings, assuming the screenshot values end in .00. Continue anyway?`)){ $('mapShotStatus').textContent='Stopped: check unusually large source values and correct OCR errors before extending.'; return; }
+ mapShotRowsData=src;mapShotOutputAxis=[...axis,...Array.from({length:add},(_,i)=>axis[axis.length-1]+step*(i+1))];
+ const pressureSchedule=$("mapShotPressureSchedule").value;
+ mapShotOutput=src.map((row,rowIndex)=>{const vals=row.map(Number),n=vals.length;let slope,intercept;
+  const rowPressure=rowIndex*100;
+  const rowMultiplier=pressureSchedule==='on'?(rowPressure<=1000?1:(rowPressure===1100?.9:.8)):1;
+  let predictions=[];
+  if(method==='trend'){const mx=axis.reduce((a,b)=>a+b,0)/n,my=vals.reduce((a,b)=>a+b,0)/n;let ss=0,sp=0;for(let i=0;i<n;i++){ss+=(axis[i]-mx)**2;sp+=(axis[i]-mx)*(vals[i]-my)}slope=ss?sp/ss:0;intercept=my-slope*mx;predictions=Array.from({length:add},(_,i)=>{const base=intercept+slope*mapShotOutputAxis[n+i];return Number((vals[n-1]+(base-vals[n-1])*rowMultiplier).toFixed(dec));});}
+  else {slope=(vals[n-1]-vals[n-2])/(axis[n-1]-axis[n-2]);let current=vals[n-1],prevAxis=axis[n-1];predictions=Array.from({length:add},(_,i)=>{const dx=mapShotOutputAxis[n+i]-prevAxis;current+=slope*dx*rowMultiplier;prevAxis=mapShotOutputAxis[n+i];return Number(current.toFixed(dec));});}
+  return [...vals,...predictions];
+ });
+ const orig=src[0].length;let html='<table class="mapshot-table"><thead><tr><th>Map row</th>'+Array.from({length:orig+add},(_,c)=>`<th class="${c>=orig?'newcol':''}">${mapShotAxisLabel(mapShotOutputAxis[c])} mm³</th>`).join('')+'</tr></thead><tbody>';
+ mapShotOutput.forEach((row,r)=>{html+=`<tr><th>${r+1}</th>`+row.map((v,c)=>`<td class="${c>=orig?'newcol':''}">${fmt(v,dec)}</td>`).join('')+'</tr>'});html+='</tbody></table>';
+ $("mapShotOutputWrap").innerHTML=html;$("mapShotStatus").textContent=`Generated ${src.length} rows at ${add} new mm³/stroke axis points using ${method==='trend'?'linear regression against actual axis values':'last-two-point slope against actual axis values'}. Verify the axis and every result.`;
+};
+function mapShotTsv(){return mapShotOutput.map(r=>r.join('\t')).join('\n')}
+$("mapShotCopy").onclick=()=>{if(!mapShotOutput.length){alert('Generate the extended table first.');return}copyText(mapShotTsv())};
+$("mapShotExport").onclick=()=>{if(!mapShotOutput.length){alert('Generate the extended table first.');return}downloadCsv('extended_map.csv',['map_row',...mapShotOutputAxis.map(v=>`${v} mm3/stroke`)],mapShotOutput)};
+
+// Offline lightweight screenshot OCR: local canvas processing and glyph-template matching.
+// This is intentionally a prototype; numeric results must be manually verified.
+let ocrCrop=null, ocrDrag=null, ocrCanvasImage=null, ocrCanvasScale=1;
+const ocrCanvas=$('mapOcrCanvas'), ocrCtx=ocrCanvas.getContext('2d');
+function drawOcrCanvas(){
+ const img=$('mapShotImage'); if(!img.complete||!img.naturalWidth){ocrCtx.clearRect(0,0,ocrCanvas.width,ocrCanvas.height);ocrCtx.fillStyle='#9eafc9';ocrCtx.font='16px sans-serif';ocrCtx.fillText('Load a screenshot to select the numeric grid',18,35);return;}
+ const maxW=Math.max(320,ocrCanvas.parentElement.clientWidth||900), scale=Math.min(1,maxW/img.naturalWidth);ocrCanvasScale=scale;
+ ocrCanvas.width=Math.round(img.naturalWidth*scale);ocrCanvas.height=Math.round(img.naturalHeight*scale);ocrCtx.drawImage(img,0,0,ocrCanvas.width,ocrCanvas.height);
+ if(ocrCrop){ocrCtx.strokeStyle='#42d8ff';ocrCtx.lineWidth=2;ocrCtx.strokeRect(ocrCrop.x*scale,ocrCrop.y*scale,ocrCrop.w*scale,ocrCrop.h*scale);ocrCtx.fillStyle='#42d8ff';ocrCtx.fillRect(ocrCrop.x*scale,ocrCrop.y*scale,Math.min(ocrCrop.w*scale,180),22);ocrCtx.fillStyle='#06111d';ocrCtx.font='bold 12px sans-serif';ocrCtx.fillText('Selected numeric grid',ocrCrop.x*scale+5,ocrCrop.y*scale+15);}
+}
+$('mapShotImage').addEventListener('load',()=>{drawOcrCanvas();$('ocrRows').value=$('mapShotRows').value;$('ocrCols').value=$('mapShotCols').value;});
+function ocrPoint(ev){const r=ocrCanvas.getBoundingClientRect();return {x:(ev.clientX-r.left)*(ocrCanvas.width/r.width),y:(ev.clientY-r.top)*(ocrCanvas.height/r.height)}}
+ocrCanvas.addEventListener('pointerdown',ev=>{if(!$('mapShotImage').naturalWidth)return;ocrCanvas.setPointerCapture(ev.pointerId);const p=ocrPoint(ev);ocrDrag={x:p.x,y:p.y};});
+ocrCanvas.addEventListener('pointerup',ev=>{if(!ocrDrag)return;const p=ocrPoint(ev),s=ocrCanvasScale;const x1=Math.min(ocrDrag.x,p.x)/s,y1=Math.min(ocrDrag.y,p.y)/s,x2=Math.max(ocrDrag.x,p.x)/s,y2=Math.max(ocrDrag.y,p.y)/s;ocrCrop={x:x1,y:y1,w:x2-x1,h:y2-y1};ocrDrag=null;drawOcrCanvas();$('mapOcrStatus').textContent=`Selected crop: ${Math.round(ocrCrop.w)} × ${Math.round(ocrCrop.h)} image pixels. Make sure it covers exactly ${$('ocrRows').value} rows × ${$('ocrCols').value} numeric cells.`;});
+$('mapOcrReset').onclick=()=>{ocrCrop=null;drawOcrCanvas();$('mapOcrStatus').textContent='Selection cleared. Drag a rectangle around the numeric cells.'};
+function ocrNormalizeMask(mask,w,h,nw=16,nh=24){let out=new Uint8Array(nw*nh);for(let y=0;y<nh;y++)for(let x=0;x<nw;x++){const sx=Math.min(w-1,Math.floor((x+.5)*w/nw)),sy=Math.min(h-1,Math.floor((y+.5)*h/nh));out[y*nw+x]=mask[sy*w+sx]?1:0;}return out;}
+function ocrGlyphTemplates(){if(window.__ocrGlyphTemplates)return window.__ocrGlyphTemplates;const out=[];const c=document.createElement('canvas'),ctx=c.getContext('2d',{willReadFrequently:true});c.width=42;c.height=56;const chars='0123456789.-';for(const font of ['Arial','Segoe UI','Roboto','Verdana','Tahoma','monospace'])for(const weight of ['normal','bold'])for(const ch of chars){ctx.clearRect(0,0,42,56);ctx.fillStyle='#000';ctx.font=`${weight} 38px ${font}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ch,21,28);const im=ctx.getImageData(0,0,42,56),m=new Uint8Array(42*56);let minX=42,minY=56,maxX=-1,maxY=-1;for(let y=0;y<56;y++)for(let x=0;x<42;x++){if(im.data[(y*42+x)*4+3]>80){m[y*42+x]=1;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}}if(maxX>=minX){const cw=maxX-minX+1,chh=maxY-minY+1,cut=new Uint8Array(cw*chh);for(let y=0;y<chh;y++)for(let x=0;x<cw;x++)cut[y*cw+x]=m[(minY+y)*42+minX+x];out.push({ch,mask:ocrNormalizeMask(cut,cw,chh)});}}window.__ocrGlyphTemplates=out;return out;}
+function ocrComponents(binary,w,h){const seen=new Uint8Array(w*h),comps=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++){const idx=y*w+x;if(!binary[idx]||seen[idx])continue;let q=[idx],head=0;seen[idx]=1;let minX=x,maxX=x,minY=y,maxY=y,pixels=[];while(head<q.length){const k=q[head++],xx=k%w,yy=Math.floor(k/w);pixels.push(k);minX=Math.min(minX,xx);maxX=Math.max(maxX,xx);minY=Math.min(minY,yy);maxY=Math.max(maxY,yy);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=xx+dx,ny=yy+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;const ni=ny*w+nx;if(binary[ni]&&!seen[ni]){seen[ni]=1;q.push(ni);}}}if(pixels.length>=2)comps.push({minX,maxX,minY,maxY,pixels});}return comps.sort((a,b)=>a.minX-b.minX);}
+function ocrCell(canvas,threshold){const ctx=canvas.getContext('2d',{willReadFrequently:true}),w=canvas.width,h=canvas.height;if(w<4||h<4)return '?';const im=ctx.getImageData(0,0,w,h),gray=new Uint8Array(w*h);let border=0;for(let i=0;i<w*h;i++){const r=im.data[i*4],g=im.data[i*4+1],b=im.data[i*4+2];gray[i]=Math.round((r+g+b)/3);border+=gray[i];}const avg=border/(w*h),darkBackground=avg<125,bin=new Uint8Array(w*h);for(let i=0;i<w*h;i++)bin[i]=darkBackground?gray[i]>255-threshold:gray[i]<threshold;
+ // Remove speckle and crop to ink bounds.
+ const comps=ocrComponents(bin,w,h).filter(c=>{const cw=c.maxX-c.minX+1,ch=c.maxY-c.minY+1;return c.pixels.length>=Math.max(3,w*h*.0008)&&ch>=Math.max(3,h*.12)&&cw<=w*.8;});if(!comps.length)return '?';const top=Math.min(...comps.map(c=>c.minY)),bot=Math.max(...comps.map(c=>c.maxY));let heights=comps.map(c=>c.maxY-c.minY+1).sort((a,b)=>a-b),medH=heights[Math.floor(heights.length/2)]||h*.5;const templates=ocrGlyphTemplates();let result='';for(const c of comps){const cw=c.maxX-c.minX+1,ch=c.maxY-c.minY+1;if(ch<medH*.25&&cw<medH*.25){if(c.minY>top+medH*.55)result+='.';continue;}const m=new Uint8Array(cw*ch);for(const k of c.pixels){const x=k%w-c.minX,y=Math.floor(k/w)-c.minY;m[y*cw+x]=1;}const norm=ocrNormalizeMask(m,cw,ch),rank=templates.map(t=>{let diff=0,ink=0;for(let i=0;i<norm.length;i++){if(norm[i]!==t.mask[i])diff++;if(norm[i])ink++;}return {ch:t.ch,score:diff/norm.length};}).sort((a,b)=>a.score-b.score);let best=rank[0];if(best&&best.score>.39)result+='?';else result+=best?.ch||'?';}
+ // A small horizontal dash component may be lost by height filter; detect a short horizontal mark in left area.
+ if(comps.some(c=>(c.maxX-c.minX+1)>medH*.45&&(c.maxY-c.minY+1)<medH*.18&&c.minX<w*.35))result='-'+result;
+ return result.replace(/\?+/g,'?');}
+function ocrCellCrop(source,rect,threshold){const c=document.createElement('canvas');c.width=Math.max(8,Math.round(rect.w));c.height=Math.max(8,Math.round(rect.h));const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(source,rect.x,rect.y,rect.w,rect.h,0,0,c.width,c.height);return ocrCell(c,threshold);}
+
+let detectedGridLines=null;
+function detectAxisLines(source, crop, axis, expectedCount){
+  const ctx=source.getContext('2d',{willReadFrequently:true});
+  const x0=Math.max(0,Math.floor(crop.x)), y0=Math.max(0,Math.floor(crop.y));
+  const w=Math.min(source.width-x0,Math.ceil(crop.w)), h=Math.min(source.height-y0,Math.ceil(crop.h));
+  const im=ctx.getImageData(x0,y0,w,h), len=axis==='x'?w:h, cross=axis==='x'?h:w;
+  const scores=new Array(len).fill(0);
+  for(let p=0;p<len;p++){
+    let hit=0;
+    for(let q=0;q<cross;q++){
+      const xx=axis==='x'?p:q, yy=axis==='x'?q:p, i=(yy*w+xx)*4;
+      const r=im.data[i],g=im.data[i+1],b=im.data[i+2], bright=(r+g+b)/3;
+      // Thin gray table rules in dark themes are bright and span most of the perpendicular dimension.
+      if(bright>105 && bright<225 && Math.max(r,g,b)-Math.min(r,g,b)<45) hit++;
+    }
+    scores[p]=hit/cross;
+  }
+  const minGap=Math.max(3,Math.floor(len/(expectedCount*2.5)));
+  const candidates=[];
+  for(let i=0;i<len;i++) if(scores[i]>.52) candidates.push(i);
+  const clusters=[];
+  for(const p of candidates){
+    const last=clusters[clusters.length-1];
+    if(last && p-last[last.length-1]<=2) last.push(p); else clusters.push([p]);
+  }
+  let lines=clusters.map(a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length)+ (axis==='x'?x0:y0));
+  // If OCR table grid lines are clear, use the complete detected set. Reject text-induced noisy detections.
+  lines=lines.filter((v,i)=>i===0 || v-lines[i-1]>=minGap);
+  return lines;
+}
+function normalizeOcrInteger(value){
+ const s=String(value??'').trim();
+ if(!s) return s;
+ // The user's StageX screenshot consistently renders values with two trailing decimal digits (.00).
+ // The OCR often drops the decimal glyph, so remove the final two digits for integer-only readings.
+ if(/^[-+]?\d+$/.test(s)){
+   const sign=s.startsWith('-')?'-':(s.startsWith('+')?'+':'');
+   const digits=s.replace(/^[-+]/,'');
+   if(digits.length<=2) return '0';
+   return sign+digits.slice(0,-2);
+ }
+ // If OCR does retain a decimal, keep only the integer part when fractional digits are .00.
+ if(/^[-+]?\d+\.00$/.test(s)) return s.split('.')[0];
+ return s;
+}
+function getDetectedGrid(source, crop, rows, cols){
+  const xs=detectAxisLines(source,crop,'x',cols+1), ys=detectAxisLines(source,crop,'y',rows+1);
+  if(xs.length!==cols+1 || ys.length!==rows+1) return {ok:false,xs,ys,reason:`Detected ${Math.max(0,xs.length-1)} columns and ${Math.max(0,ys.length-1)} rows; you entered ${cols} columns and ${rows} rows. Tighten the selection around the table and check the row/column counts.`};
+  return {ok:true,xs,ys};
+}
+$('mapOcrDetect').onclick=()=>{
+ const img=$('mapShotImage');
+ if(!img.naturalWidth||!ocrCrop){$('mapOcrStatus').textContent='Load a screenshot and drag-select the complete grid first.';return;}
+ const rows=Math.max(1,Math.min(80,Math.floor(Number($('ocrRows').value)||1))), cols=Math.max(2,Math.min(40,Math.floor(Number($('ocrCols').value)||2)));
+ const source=document.createElement('canvas');source.width=img.naturalWidth;source.height=img.naturalHeight;source.getContext('2d').drawImage(img,0,0);
+ detectedGridLines=getDetectedGrid(source,ocrCrop,rows,cols);
+ if(!detectedGridLines.ok){$('mapOcrStatus').textContent=detectedGridLines.reason;return;}
+ $('mapOcrStatus').textContent=`Grid boundaries detected: ${cols} columns × ${rows} rows. Press “Recognize cells offline” to read each cell separately.`;
+};
+$('mapOcrRun').onclick=()=>{
+ const img=$('mapShotImage');
+ if(!img.naturalWidth||!ocrCrop){$('mapOcrStatus').textContent='Load a screenshot and drag-select the complete grid first.';return;}
+ const rows=Math.max(1,Math.min(80,Math.floor(Number($('ocrRows').value)||1))),cols=Math.max(2,Math.min(40,Math.floor(Number($('ocrCols').value)||2))),thr=Number($('ocrThreshold').value);
+ const source=document.createElement('canvas');source.width=img.naturalWidth;source.height=img.naturalHeight;source.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0);
+ const grid=getDetectedGrid(source,ocrCrop,rows,cols);
+ if(!grid.ok){$('mapOcrStatus').textContent=grid.reason+' Click “Detect grid boundaries” after correcting the selection/counts.';return;}
+ const vals=[];
+ for(let r=0;r<rows;r++){
+   const row=[];
+   for(let c=0;c<cols;c++){
+     const x1=grid.xs[c]+2, x2=grid.xs[c+1]-2, y1=grid.ys[r]+2, y2=grid.ys[r+1]-2;
+     const rect={x:x1,y:y1,w:Math.max(1,x2-x1),h:Math.max(1,y2-y1)};
+     row.push(normalizeOcrInteger(ocrCellCrop(source,rect,thr)));
+   }
+   vals.push(row);
+ }
+ $('mapShotRows').value=rows;$('mapShotCols').value=cols;mapShotBuildGrid(vals);
+ const uncertain=vals.flat().filter(v=>!v||v.includes('?')||!/^[-+]?\d+(?:\.\d+)?$/.test(v)).length;
+ const suspicious=vals.flat().filter(v=>/^[-+]?\d{5,}$/.test(String(v).trim())).length;
+ $('mapOcrStatus').textContent=`Read ${rows*cols} cells individually. ${uncertain} uncertain cell(s); ${suspicious} long integer reading(s) were detected. For this screenshot format, integer-only readings have their final two digits removed (e.g. 344000 → 3440). Verify the values before extending.`;
+ $('mapShotStatus').textContent=suspicious
+  ? `Check ${suspicious} cell(s): OCR may have dropped the decimal point. Integer-only readings were normalized by removing the last two digits. Verify them before extending.`
+  : 'OCR values populated into editable grid. Correct every uncertain or incorrect cell before extending.';
+};
+
+window.addEventListener('resize',()=>{if($('mapShotImage').naturalWidth)drawOcrCanvas()});
+mapShotBuildGrid();
+</script>
+</body>
+</html>
