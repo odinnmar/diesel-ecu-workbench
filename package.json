@@ -1,7 +1,7 @@
 {
   "name": "diesel-ecu-workbench",
-  "version": "1.0.0",
-  "description": "Offline Diesel ECU Calibration Workbench",
+  "version": "1.1.0",
+  "description": "Professional offline Diesel ECU calibration workspace",
   "main": "main.js",
   "author": "Diesel ECU Workbench",
   "license": "UNLICENSED",
@@ -18,12 +18,26 @@
     "appId": "net.dieselecu.workbench",
     "productName": "Diesel ECU Workbench",
     "icon": "app.ico",
-    "directories": { "output": "release" },
-    "files": ["main.js", "index.html", "app.ico", "package.json"],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "app.ico",
+      "package.json"
+    ],
     "asar": true,
     "win": {
       "icon": "app.ico",
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "Diesel-ECU-Workbench-Setup-${version}.${ext}"
     },
     "nsis": {

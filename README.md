@@ -1,9 +1,34 @@
-# Diesel ECU Workbench — Windows installer build
+# Diesel ECU Workbench
 
-This repository packages the stable V3.13 offline HTML workbench in Electron and builds a Windows x64 NSIS installer using GitHub Actions.
+A local, offline desktop workspace for diesel ECU calibration calculations and analysis.
 
-## Build
+## What changed in 1.1.0
 
-Push/commit the project to GitHub, then open **Actions → Build Windows installer** and run the workflow. Download the `Diesel-ECU-Workbench-Setup` artifact from a successful run.
+- Redesigned desktop workspace with a fixed navigation rail, compact application header, contextual page titles, and a consistent dark engineering UI.
+- Improved spacing, typography, controls, tables, result cards, and status cues.
+- Preserved the existing calculators, map tools, compare workflow, logs, unit conversions, project notes, and exports.
+- Windows packaging does not attempt to publish a GitHub release automatically.
 
-The application entry file and icon are at the repository root. Keep `index.html`, `main.js`, `package.json`, and `app.ico` together.
+## Run locally
+
+Install Node.js 22 or newer, then run:
+
+```bash
+npm install
+npm start
+```
+
+## Build Windows installer
+
+On Windows, run `BUILD-WINDOWS.bat`, or use:
+
+```bash
+npm install
+npm run dist:win
+```
+
+The installer is written to `release/Diesel-ECU-Workbench-Setup-1.1.0.exe`.
+
+## Notes
+
+This is an offline calculation and analysis tool. Always verify map definitions, units, scaling, and calculations independently before using any result in an ECU calibration. Keep untouched backups of original files.

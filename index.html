@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Diesel ECU Calibration Workbench — Ultimate</title>
+<title>Diesel ECU Workbench</title>
 <style>
 :root{--bg:#080d18;--panel:#101a2b;--panel2:#17243a;--line:#2a3b56;--text:#f0f5ff;--muted:#9eafc9;--accent:#73c7ff;--good:#63d9ad;--warn:#ffca78;--bad:#ff858e;--radius:16px}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% -10%,#183353 0,transparent 34%),radial-gradient(ellipse at 100% 0%,#152942 0,transparent 30%),linear-gradient(145deg,#080d18,#0b1322 60%,#0b1726);color:var(--text);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;letter-spacing:.05px}
@@ -18,11 +18,52 @@ button{border:1px solid #4c85b6;background:linear-gradient(135deg,#23639a,#17476
 table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{color:#b8c9e5;font-weight:650}td input{padding:6px;font-size:12px;min-width:72px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}.mapshot-table th,.mapshot-table td{white-space:nowrap;padding:4px}.mapshot-table input{width:86px;min-width:86px;padding:7px 6px}.mapshot-table .newcol{background:#123554}.mapshot-table .newcol input{border-color:#3679a8;background:#0b2236}canvas{width:100%;height:230px;background:linear-gradient(145deg,#091321,#0c1929);border:1px solid #293c57;border-radius:12px}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.small{font-size:12px}.hide{display:none!important}.pill{display:inline-block;border:1px solid var(--line);padding:3px 7px;border-radius:99px;color:var(--muted);font-size:11px;margin-right:4px}.foot{color:var(--muted);font-size:11px;margin:18px 0 4px}.checks{display:grid;gap:7px}.checkrow{padding:10px 12px;border:1px solid #2b3e59;border-radius:10px;background:linear-gradient(135deg,#101d30,#0d1727)}.checkrow b{color:#dfeaff}.checkrow span{color:var(--muted)}
 @media(max-width:850px){.span8,.span7,.span6,.span5,.span4,.span3{grid-column:span 12}.fields.four,.fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}header{position:static}}
 @media(max-width:480px){.wrap{padding:12px}.fields,.fields.three,.fields.four{grid-template-columns:1fr}.card{padding:12px}.tab{padding:8px 10px}}
+
+/* ===== DESKTOP WORKSPACE REDESIGN ===== */
+:root{--bg:#0a0e14;--panel:#111821;--panel2:#151f2b;--line:#263342;--text:#e8eef5;--muted:#8fa0b3;--accent:#53d6b4;--good:#53d6b4;--warn:#f3bd62;--bad:#ff7777;--radius:13px;--shadow:0 12px 34px #0003}
+html{background:var(--bg);scroll-behavior:smooth}body{background:radial-gradient(ellipse at 80% -20%,#183c3b55,transparent 35%),linear-gradient(150deg,#0a0e14,#0c121a 55%,#0a1117);font-size:13px;letter-spacing:0;color:var(--text);padding-top:72px}
+header{height:72px;padding:0 28px 0 26px;display:flex;align-items:center;gap:14px;position:fixed;inset:0 0 auto 0;background:#0c1219f5;border-bottom:1px solid #25313e;box-shadow:0 8px 28px #0003;backdrop-filter:blur(18px)}
+header:before{content:"D";display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(145deg,#63e4c0,#1b9b86);color:#061612;font-weight:950;font-size:22px;box-shadow:0 5px 18px #27b99c30}
+header h1{font-size:16px;letter-spacing:-.35px;color:#f3f7fa;background:none;-webkit-text-fill-color:currentColor;margin:0;font-weight:800;white-space:nowrap}
+header p{display:none}header .pill{font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#102e2a;color:#71e5c8;border-color:#24564c;padding:5px 8px;margin-left:5px}
+header:after{content:"OFFLINE WORKSPACE  •  LOCAL SESSION";margin-left:auto;color:#8194a6;font:600 10px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:1px}
+.wrap{max-width:none;margin:0 0 0 238px;padding:28px 32px 50px;}
+/* Sidebar navigation */
+#tabs{position:fixed;z-index:8;top:72px;bottom:0;left:0;width:238px;padding:25px 13px 22px;background:linear-gradient(180deg,#0d141c,#0b1118);border-right:1px solid #202c38;display:flex;flex-direction:column;flex-wrap:nowrap;gap:5px;margin:0;overflow-y:auto}
+#tabs:before{content:"WORKSPACE";display:block;padding:0 12px 12px;color:#617487;font-size:10px;font-weight:800;letter-spacing:1.8px}
+#tabs:after{content:"DIESEL ECU WORKBENCH\A Calibration utilities • Offline";white-space:pre-line;display:block;margin-top:auto;padding:18px 11px 8px;border-top:1px solid #202c38;color:#6d8092;font-size:10px;line-height:1.8}
+.tab{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:11px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#92a2b4;box-shadow:none;font-weight:650;transform:none!important;transition:background .15s,color .15s,border-color .15s}
+.tab:before{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:#17222e;color:#a6b8c8;font-size:12px;flex:0 0 22px}
+.tab[data-tab="eoi"]:before{content:"◷"}.tab[data-tab="math"]:before{content:"ƒx"}.tab[data-tab="mapshot"]:before{content:"▦"}.tab[data-tab="compare"]:before{content:"⇄"}.tab[data-tab="logs"]:before{content:"⌁"}.tab[data-tab="units"]:before{content:"↔"}.tab[data-tab="project"]:before{content:"▤"}.tab[data-tab="advanced"]:before{content:"⌘"}
+.tab:hover{background:#141f2a;border-color:#293a49;color:#e5edf4;box-shadow:none}.tab.active{background:linear-gradient(100deg,#143b35,#122a29);color:#8cebd2;border-color:#24584f;box-shadow:inset 3px 0 #53d6b4}.tab.active:before{background:#1a4b41;color:#83efd6}
+/* Page title is updated as users navigate */
+.workspace-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:0 0 23px;padding:0 0 20px;border-bottom:1px solid #202c37}
+.workspace-heading .eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:1.7px;color:#62d7b7;font-weight:800;margin-bottom:7px}
+.workspace-heading h2{font-size:27px;line-height:1.15;letter-spacing:-.8px;margin:0;color:#f0f5f8;font-weight:760}
+.workspace-heading p{margin:8px 0 0;color:#899bad;font-size:12px;max-width:700px}
+.workspace-heading .live-chip{display:flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid #263943;border-radius:8px;background:#101a21;color:#91a6b7;font-size:10px;font-weight:700;letter-spacing:.8px;white-space:nowrap}
+.live-chip:before{content:"";width:7px;height:7px;border-radius:50%;background:#53d6b4;box-shadow:0 0 0 4px #53d6b41a}
+/* The old getting-started panel is replaced by contextual page heading */
+.wrap>.card:first-child{display:none}
+section{animation:pageIn .18s ease-out}section:not(.active){display:none}@keyframes pageIn{from{opacity:.6;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.grid{gap:15px}.card{background:linear-gradient(145deg,#131d27f5,#101720f8 78%);border:1px solid #273442;border-radius:13px;padding:20px;box-shadow:0 7px 24px #00000013;transition:border-color .18s,background .18s}.card:hover{border-color:#344b5b}
+h2{font-size:15px;letter-spacing:-.2px;font-weight:750;margin:0 0 12px;color:#eaf1f5}h3{font-size:12px;letter-spacing:.2px;text-transform:uppercase;color:#9bb1c0;margin:17px 0 9px}.sub{font-size:11px;line-height:1.6;color:#8193a5;margin:-5px 0 14px}
+label{font-size:11px;color:#9aabbb;font-weight:650;letter-spacing:.1px}input,select,textarea{background:#0b1118;border:1px solid #2a3947;border-radius:8px;color:#e5edf3;padding:10px 11px;box-shadow:none;font-size:12px}input:hover,select:hover,textarea:hover{border-color:#3a5262}input:focus,select:focus,textarea:focus{border-color:#4ac6a7;box-shadow:0 0 0 3px #53d6b415}textarea{line-height:1.6}
+button{background:linear-gradient(135deg,#32b99b,#23937e);color:#061713;border:1px solid #46c9aa;border-radius:8px;padding:10px 14px;box-shadow:none;font-size:11px;font-weight:800;letter-spacing:.15px}button:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 5px 15px #0003}button.secondary{background:#18232d;border-color:#31414e;color:#c0ced8}button.danger{background:#321d22;border-color:#63343c;color:#ffb5b5}
+.metric{background:linear-gradient(145deg,#111d25,#0d151c);border:1px solid #273742;border-radius:10px;padding:14px;box-shadow:none}.metric small{color:#8197a6;font-size:9px;letter-spacing:1px}.metric strong{font-size:22px;letter-spacing:-.5px;font-weight:750;color:#edf5f6}.metric em{font-size:10px;color:#8498a6}.notice{border:1px solid #263c43;border-left:3px solid #53d6b4;border-radius:7px;background:#101f23;color:#c1d7d7;padding:12px 14px;font-size:11px;line-height:1.65}.notice.warn{border-color:#51422c;border-left-color:#e5b75f;background:#241e15;color:#e9d5af}.notice.bad{border-color:#553039;border-left-color:#f07882;background:#26171c;color:#f2c9cd}.notice.good{border-color:#285347;border-left-color:#53d6b4;background:#10231f;color:#c5f1e2}
+.checkrow{background:#111c25;border-color:#283744;border-radius:9px;padding:12px}.checkrow b{font-size:12px;color:#dfe9ef}.checkrow span{font-size:11px;line-height:1.6;color:#8da1b0}
+.tablewrap{border-color:#293945;border-radius:9px;background:#0c131a}table{font-size:11px}th{position:sticky;top:0;background:#151f28;color:#9fb4c3;text-transform:uppercase;font-size:9px;letter-spacing:.7px}th,td{border-bottom:1px solid #24313c;padding:9px}td input{background:#0b1117;border-color:#273641}canvas{background:#0b1218;border-color:#273844;border-radius:10px}.pill{background:#15232c;border-color:#2b3d49;color:#92a8b7}.foot{border-top:1px solid #202c37;padding-top:14px;color:#65798a;font-size:10px}
+/* Keep map data dense and readable without breaking the original tools */
+.mapshot-table th,.mapshot-table td{padding:4px}.mapshot-table input{width:86px;min-width:86px;padding:7px 6px;font-variant-numeric:tabular-nums}.mapshot-table .newcol{background:#12352f}.mapshot-table .newcol input{border-color:#287b68;background:#0b211c}
+@media(max-width:1050px){.wrap{margin-left:210px;padding:22px 20px}.workspace-heading h2{font-size:23px}#tabs{width:210px}}
+@media(max-width:760px){body{padding-top:64px}header{height:64px;padding:0 14px}header:after{display:none}#tabs{top:64px;width:62px;padding:15px 7px}#tabs:before{content:"TOOLS";font-size:8px;padding:0 4px 10px;writing-mode:vertical-rl}#tabs:after{display:none}.tab{justify-content:center;padding:10px 5px;font-size:0}.tab:before{font-size:13px}.wrap{margin-left:62px;padding:18px 12px 40px}.workspace-heading{align-items:flex-start}.workspace-heading .live-chip{display:none}.workspace-heading h2{font-size:21px}.card{padding:14px}.fields.three,.fields.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.fields,.fields.three,.fields.four{grid-template-columns:1fr}.workspace-heading h2{font-size:19px}}
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Calibration Workbench <span class="pill">ULTIMATE • OFFLINE • MAP EXTENDER TEST</span></h1><p>Map maths, SOI/EOI, extrapolation, interpolation, table comparison, logs and unit conversions — all in one local tool.</p></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p></header>
 <div class="wrap">
+<div class="workspace-heading" id="workspaceHeading"><div><div class="eyebrow">Calibration workspace / 01</div><h2>Injection timing</h2><p>SOI, duration and end-of-injection calculations in one focused workspace.</p></div><div class="live-chip">LOCAL SESSION READY</div></div>
 <div class="card" style="margin-bottom:14px">
 <h2>Start here — what are you trying to do?</h2>
 <p class="sub">You do not need to use every calculator. Pick the job you want to do:</p>
@@ -641,6 +682,24 @@ $('mapOcrRun').onclick=()=>{
 
 window.addEventListener('resize',()=>{if($('mapShotImage').naturalWidth)drawOcrCanvas()});
 mapShotBuildGrid();
+
+// Workspace chrome: contextual title, nav hints, and keyboard-friendly active state.
+(function(){
+ const meta={
+  eoi:['Injection timing','SOI, duration and end-of-injection calculations in one focused workspace.','01'],
+  math:['Map mathematics','Extrapolation, interpolation, trend fitting and delta calculations.','02'],
+  mapshot:['Screenshot map extender','Read, correct and extend numeric grids from map screenshots.','03'],
+  compare:['Map comparison','Compare original and modified tables cell by cell.','04'],
+  logs:['Log analysis','Review requested versus actual boost, rail pressure and operating data.','05'],
+  units:['Units & fuel','Convert engineering units and check duration/time relationships.','06'],
+  project:['Project & checks','Keep session notes, calibration changes and validation evidence together.','07'],
+  advanced:['Tuning helpers','Additional calculation and reporting utilities.','08']
+ };
+ const heading=document.getElementById('workspaceHeading');
+ function setHeading(id){const m=meta[id]||meta.eoi;heading.querySelector('.eyebrow').textContent='Calibration workspace / '+m[2];heading.querySelector('h2').textContent=m[0];heading.querySelector('p').textContent=m[1];document.title=m[0]+' — Diesel ECU Workbench';}
+ document.querySelectorAll('#tabs .tab').forEach(b=>{b.setAttribute('aria-label',b.textContent.trim());b.title=b.textContent.trim();b.addEventListener('click',()=>setHeading(b.dataset.tab));});
+ setHeading(document.querySelector('#tabs .tab.active')?.dataset.tab||'eoi');
+})();
 </script>
 </body>
 </html>
