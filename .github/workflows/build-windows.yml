@@ -1,9 +1,9 @@
-```yaml
 name: Build and publish Windows installer
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -16,7 +16,6 @@ concurrency:
 jobs:
   publish:
     runs-on: windows-latest
-
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -26,7 +25,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -56,7 +55,6 @@ jobs:
         run: |
           $version = (Get-Content package.json | ConvertFrom-Json).version
           $tag = "v$version"
-          gh release view $tag --repo "${{ github.repository }}" --json assets --jq '.assets[].name' | Tee-Object -Variable assets
-          if (-not ($assets -match 'latest.yml')) { throw "Missing latest.yml in $tag" }
-          if (-not ($assets -match '\.exe$')) { throw "Missing installer in $tag" }
-```
+          $assets = gh release view $tag --repo "${{ github.repository }}" --json assets --jq ".assets[].name"
+          if (-not ($assets -match "latest.yml")) { throw "Missing latest.yml in $tag" }
+          if (-not ($assets -match "\.exe$")) { throw "Missing installer in $tag" }
