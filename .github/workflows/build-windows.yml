@@ -33,7 +33,37 @@ jobs:
       - name: Select next release version
         run: node .github/scripts/next-version.cjs
 
-      - name: Create and push version tag
+      - name: Build Windows installer
+        run: npm run dist:win
+
+      - name: Generate updater metadata
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $version = $pkg.version
+          $exe = Get-ChildItem release -Filter "*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Windows installer was not generated" }
+
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA512).Hash
+          $bytes = [Convert]::FromHexString($hash)
+          $sha512 = [Convert]::ToBase64String($bytes)
+          $size = $exe.Length
+          $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+
+          @"
+          version: $version
+          files:
+            - url: $($exe.Name)
+              sha512: $sha512
+              size: $size
+          path: $($exe.Name)
+          sha512: $sha512
+          releaseDate: '$date'
+          "@ | Set-Content release/latest.yml -Encoding utf8
+
+          Get-Content release/latest.yml
+
+      - name: Create and push release tag
         shell: pwsh
         run: |
           $version = (Get-Content package.json | ConvertFrom-Json).version
@@ -43,18 +73,38 @@ jobs:
           git tag $tag
           git push origin $tag
 
-      - name: Build and publish installer
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run publish:win
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          gh release create $tag --repo "${{ github.repository }}" --title "Diesel ECU Workbench $version" --notes "Diesel ECU Workbench $version for Windows."
+
+      - name: Upload installer and updater metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          $exe = Get-ChildItem release -Filter "*.exe" | Select-Object -First 1
+          $blockmap = Get-ChildItem release -Filter "*.exe.blockmap" | Select-Object -First 1
+          if (-not $exe) { throw "Installer missing" }
+          if (-not (Test-Path release/latest.yml)) { throw "latest.yml missing" }
+          $files = @($exe.FullName, "release/latest.yml")
+          if ($blockmap) { $files += $blockmap.FullName }
+          gh release upload $tag $files --repo "${{ github.repository }}" --clobber
 
       - name: Verify release assets
-        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
         run: |
           $version = (Get-Content package.json | ConvertFrom-Json).version
           $tag = "v$version"
           $assets = gh release view $tag --repo "${{ github.repository }}" --json assets --jq ".assets[].name"
-          if (-not ($assets -match "latest.yml")) { throw "Missing latest.yml in $tag" }
-          if (-not ($assets -match "\.exe$")) { throw "Missing installer in $tag" }
+          $assets
+          if (-not ($assets -match "latest.yml")) { throw "Missing latest.yml" }
+          if (-not ($assets -match "\.exe$")) { throw "Missing Windows installer" }
