@@ -73,3 +73,8 @@ Ensure **Settings → Actions → General → Workflow permissions** allows read
 
 Version selection occurs during CI, so the packaged version can advance beyond
 the minimum version shown in the committed `package.json`.
+
+
+## SOI / EOI IQ handling
+
+The SOI/EOI calculator defaults to a clearly labelled rough estimate where tuned duration is calculated as stock duration × tuned IQ / stock IQ. This makes EOI respond to IQ changes but is not a calibrated injector model. When the actual tuned duration-map value is known, switch to “Use entered tuned duration from map”; that mode uses the supplied duration directly.
