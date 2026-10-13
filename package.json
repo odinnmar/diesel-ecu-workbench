@@ -1,4 +1,3 @@
-```json
 {
   "name": "diesel-ecu-workbench",
   "version": "1.2.4",
@@ -32,9 +31,7 @@
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
       "artifactName": "Diesel-ECU-Workbench-Setup-${version}.${ext}"
@@ -63,4 +60,3 @@
   },
   "homepage": "https://github.com/odinnmar/diesel-ecu-workbench"
 }
-```
