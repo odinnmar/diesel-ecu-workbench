@@ -1,3 +1,4 @@
+```yaml
 name: Build and publish Windows installer
 
 on:
@@ -15,8 +16,9 @@ concurrency:
 jobs:
   publish:
     runs-on: windows-latest
+
     steps:
-      - name: Check out current source
+      - name: Check out source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -29,22 +31,32 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Select next available release version
-        shell: pwsh
+      - name: Select next release version
         run: node .github/scripts/next-version.cjs
 
-      - name: Build and publish installer with latest.yml
+      - name: Create and push version tag
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "v$version"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag $tag
+          git push origin $tag
+
+      - name: Build and publish installer
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run publish:win
 
-      - name: Verify published updater assets
+      - name: Verify release assets
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $v = (Get-Content package.json | ConvertFrom-Json).version
-          $tag = "v$v"
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "v$version"
           gh release view $tag --repo "${{ github.repository }}" --json assets --jq '.assets[].name' | Tee-Object -Variable assets
           if (-not ($assets -match 'latest.yml')) { throw "Missing latest.yml in $tag" }
-          if (-not ($assets -match '\.exe$')) { throw "Missing Windows installer in $tag" }
+          if (-not ($assets -match '\.exe$')) { throw "Missing installer in $tag" }
+```
