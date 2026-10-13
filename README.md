@@ -57,3 +57,19 @@ Each tool tab has a restrained accent color to make navigation easier while pres
 5. Verify both files are attached to the release before testing in the installed app.
 
 Branch/manual builds create a `-test` artifact only and do not publish updater metadata.
+
+## Automatic GitHub publishing (no manual tags)
+
+Commit/upload the changed source files to `main`. The **Build and publish Windows installer**
+workflow runs automatically. It chooses the next available `1.2.x` patch number
+from existing Git tags, builds the NSIS installer, and publishes the installer
+and `latest.yml` to GitHub Releases. The installed Windows app then discovers
+the latest published release through electron-updater.
+
+Do **not** create tags or releases manually. Do **not** install test artifacts.
+Check **Actions** for the publishing run, then **Releases → Assets** for
+the `.exe` and `latest.yml`. If publishing fails, inspect the failing step.
+Ensure **Settings → Actions → General → Workflow permissions** allows read/write.
+
+Version selection occurs during CI, so the packaged version can advance beyond
+the minimum version shown in the committed `package.json`.
