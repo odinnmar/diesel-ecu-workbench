@@ -39,3 +39,10 @@ The installer is written to `release/`. CI builds it on Windows using GitHub Act
 - Auto-updates require internet access and a published GitHub Release; offline use continues with the last installed version.
 - The update is offered after download and installs when the user chooses restart.
 - This tool provides engineering estimates, not a substitute for ECU-specific documentation, logs, or dyno validation. Keep untouched backups of original ECU files.
+
+
+## Visible updater status
+The installed Windows app shows its version and a **Check for updates** button in the top bar. Update checks use `electron-updater` and the GitHub Releases provider configured in `package.json`. Release assets and metadata must be published successfully for updates to work. Branch builds create artifacts only; pushing a version tag such as `v1.2.1` publishes a release. The first upgrade from older installers remains a manual install.
+
+## Workspace color accents
+Each tool tab has a restrained accent color to make navigation easier while preserving the existing dark Workbench styling.

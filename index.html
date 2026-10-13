@@ -60,10 +60,21 @@ button{background:linear-gradient(135deg,#32b99b,#23937e);color:#061713;border:1
 @media(max-width:460px){.fields,.fields.three,.fields.four{grid-template-columns:1fr}.workspace-heading h2{font-size:19px}}
 
 #horsepower{padding:0;min-width:0}#horsepower .hp-frame{display:block;width:100%;height:calc(100vh - 210px);min-height:760px;border:1px solid #263342;border-radius:13px;background:#090e13;overflow:hidden}
+
+/* Update controls */
+header{flex-wrap:nowrap} .update-controls{margin-left:auto;display:flex;align-items:center;gap:9px;min-width:0}#appVersion{font:700 10px ui-monospace,monospace;color:#a6b7c5;border:1px solid #2b3b49;padding:5px 7px;border-radius:6px;white-space:nowrap}#updateStatus{font-size:10px;color:#9aabba;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.update-button{padding:8px 10px;font-size:10px;white-space:nowrap;background:linear-gradient(135deg,#ffb45e,#f08a32);border-color:#ffb45e;color:#21150b}.update-button:disabled{opacity:.65;cursor:wait}
+/* Each workspace gets a restrained accent identity, not a wholesale redesign. */
+body.theme-eoi{--accent:#55d6b5;--good:#55d6b5}body.theme-math{--accent:#7eb8ff;--good:#7eb8ff}body.theme-mapshot{--accent:#ffad66;--good:#ffad66}body.theme-compare{--accent:#c3a1ff;--good:#c3a1ff}body.theme-logs{--accent:#69d5e7;--good:#69d5e7}body.theme-units{--accent:#f2ca70;--good:#f2ca70}body.theme-project{--accent:#f08fb6;--good:#f08fb6}body.theme-advanced{--accent:#9ed17d;--good:#9ed17d}body.theme-horsepower{--accent:#ff9b43;--good:#ffb36c}
+body.theme-math .workspace-heading .eyebrow,body.theme-mapshot .workspace-heading .eyebrow,body.theme-compare .workspace-heading .eyebrow,body.theme-logs .workspace-heading .eyebrow,body.theme-units .workspace-heading .eyebrow,body.theme-project .workspace-heading .eyebrow,body.theme-advanced .workspace-heading .eyebrow,body.theme-horsepower .workspace-heading .eyebrow{color:var(--accent)}
+body.theme-math .tab.active,body.theme-mapshot .tab.active,body.theme-compare .tab.active,body.theme-logs .tab.active,body.theme-units .tab.active,body.theme-project .tab.active,body.theme-advanced .tab.active,body.theme-horsepower .tab.active{background:color-mix(in srgb,var(--accent) 13%,#101820);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,#202a32);box-shadow:inset 3px 0 var(--accent)}
+body.theme-math .tab.active:before,body.theme-mapshot .tab.active:before,body.theme-compare .tab.active:before,body.theme-logs .tab.active:before,body.theme-units .tab.active:before,body.theme-project .tab.active:before,body.theme-advanced .tab.active:before,body.theme-horsepower .tab.active:before{background:color-mix(in srgb,var(--accent) 18%,#111820);color:var(--accent)}
+body.theme-math input:focus,body.theme-math select:focus,body.theme-math textarea:focus,body.theme-mapshot input:focus,body.theme-mapshot select:focus,body.theme-mapshot textarea:focus,body.theme-compare input:focus,body.theme-compare select:focus,body.theme-compare textarea:focus,body.theme-logs input:focus,body.theme-logs select:focus,body.theme-logs textarea:focus,body.theme-units input:focus,body.theme-units select:focus,body.theme-units textarea:focus,body.theme-project input:focus,body.theme-project select:focus,body.theme-project textarea:focus,body.theme-advanced input:focus,body.theme-advanced select:focus,body.theme-advanced textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+@media(max-width:1050px){header:after{display:none}.update-controls{gap:5px}#updateStatus{max-width:140px}}@media(max-width:760px){header{gap:8px}.update-controls{gap:4px}#updateStatus{display:none}.update-button{font-size:9px;padding:7px 8px}}@media(max-width:480px){header h1{font-size:13px}.update-button{max-width:88px;white-space:normal}}
+
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.0</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <div class="wrap">
 <div class="workspace-heading" id="workspaceHeading"><div><div class="eyebrow">Calibration workspace / 01</div><h2>Injection timing</h2><p>SOI, duration and end-of-injection calculations in one focused workspace.</p></div><div class="live-chip">LOCAL SESSION READY</div></div>
 <nav id="tabs">
@@ -689,10 +700,19 @@ mapShotBuildGrid();
   horsepower:['Diesel HP estimator','Compare stock and tuned values with transparent assumptions and plausibility checks.','09']
  };
  const heading=document.getElementById('workspaceHeading');
- function setHeading(id){const m=meta[id]||meta.eoi;heading.querySelector('.eyebrow').textContent='Calibration workspace / '+m[2];heading.querySelector('h2').textContent=m[0];heading.querySelector('p').textContent=m[1];document.title=m[0]+' — Diesel ECU Workbench';}
+ function setHeading(id){const m=meta[id]||meta.eoi;document.body.className=document.body.className.replace(/\btheme-[a-z]+\b/g,'').trim();document.body.classList.add('theme-'+id);heading.querySelector('.eyebrow').textContent='Calibration workspace / '+m[2];heading.querySelector('h2').textContent=m[0];heading.querySelector('p').textContent=m[1];document.title=m[0]+' — Diesel ECU Workbench';}
  document.querySelectorAll('#tabs .tab').forEach(b=>{b.setAttribute('aria-label',b.textContent.trim());b.title=b.textContent.trim();b.addEventListener('click',()=>setHeading(b.dataset.tab));});
  setHeading(document.querySelector('#tabs .tab.active')?.dataset.tab||'eoi');
 })();
+
+// Visible updater status and manual update check (packaged Windows builds only).
+(function(){
+ const btn=document.getElementById('checkUpdates'), status=document.getElementById('updateStatus'), version=document.getElementById('appVersion');
+ function show(payload){if(!payload)return; if(payload.version)version.textContent='v'+payload.version; status.textContent=payload.message||({checking:'Checking for updates…',current:'Up to date',downloading:'Downloading update…',ready:'Update ready to install',error:'Update check failed',unsupported:'Updates unavailable in this run'}[payload.state]||'Updater ready'); btn.disabled=payload.state==='checking'||payload.state==='downloading'; if(payload.state==='ready'){btn.disabled=false;btn.textContent='Update ready';}else if(payload.state!=='downloading'&&payload.state!=='checking'){btn.textContent='Check for updates';}}
+ if(window.workbenchApp){window.workbenchApp.getVersion().then(info=>{if(info?.version)version.textContent='v'+info.version;if(!info?.packaged||info.platform!=='win32')status.textContent='Updater available in installed Windows build';}).catch(()=>{status.textContent='Version unavailable'});window.workbenchApp.onUpdateState(show);}
+ btn.addEventListener('click',async()=>{if(!window.workbenchApp){status.textContent='Updater bridge unavailable. Reinstall the latest build.';return;}btn.disabled=true;status.textContent='Checking GitHub Releases…';try{const result=await window.workbenchApp.checkForUpdates();if(!result?.ok&&!result?.state)show({state:'error',message:result?.message||'Could not check for updates.'});}catch(e){show({state:'error',message:e.message||'Could not check for updates.'});}});
+})();
+
 </script>
 </body>
 </html>
