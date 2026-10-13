@@ -58,6 +58,8 @@ button{background:linear-gradient(135deg,#32b99b,#23937e);color:#061713;border:1
 @media(max-width:1050px){.wrap{margin-left:210px;padding:22px 20px}.workspace-heading h2{font-size:23px}#tabs{width:210px}}
 @media(max-width:760px){body{padding-top:64px}header{height:64px;padding:0 14px}header:after{display:none}#tabs{top:64px;width:62px;padding:15px 7px}#tabs:before{content:"TOOLS";font-size:8px;padding:0 4px 10px;writing-mode:vertical-rl}#tabs:after{display:none}.tab{justify-content:center;padding:10px 5px;font-size:0}.tab:before{font-size:13px}.wrap{margin-left:62px;padding:18px 12px 40px}.workspace-heading{align-items:flex-start}.workspace-heading .live-chip{display:none}.workspace-heading h2{font-size:21px}.card{padding:14px}.fields.three,.fields.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:460px){.fields,.fields.three,.fields.four{grid-template-columns:1fr}.workspace-heading h2{font-size:19px}}
+
+#horsepower{padding:0;min-width:0}#horsepower .hp-frame{display:block;width:100%;height:calc(100vh - 210px);min-height:760px;border:1px solid #263342;border-radius:13px;background:#090e13;overflow:hidden}
 </style>
 </head>
 <body>
@@ -73,6 +75,7 @@ button{background:linear-gradient(135deg,#32b99b,#23937e);color:#061713;border:1
 <button class="tab" data-tab="units">Units & Fuel</button>
 <button class="tab" data-tab="project">Project & Checks</button>
 <button class="tab" data-tab="advanced">Tuning Helpers</button>
+<button class="tab" data-tab="horsepower">Diesel HP Estimator</button>
 </nav>
 
 <section id="eoi" class="active">
@@ -368,6 +371,8 @@ button{background:linear-gradient(135deg,#32b99b,#23937e);color:#061713;border:1
 </div>
 </div>
 </section>
+
+<section id="horsepower"><iframe class="hp-frame" src="hp-estimator.html" title="Diesel HP Estimator" loading="lazy"></iframe></section>
 
 <div class="foot">Experimental map extender v3.7 with offline OCR prototype • Includes verified µs and ms to crank-angle conversions; formulas are estimates where stated; always confirm ECU-specific units and scaling. Offline single-file tool • No network calls • Keep a separate backup of original files • All results depend on the accuracy of the values and units entered.</div>
 </div>
@@ -680,7 +685,8 @@ mapShotBuildGrid();
   logs:['Log analysis','Review requested versus actual boost, rail pressure and operating data.','05'],
   units:['Units & fuel','Convert engineering units and check duration/time relationships.','06'],
   project:['Project & checks','Keep session notes, calibration changes and validation evidence together.','07'],
-  advanced:['Tuning helpers','Additional calculation and reporting utilities.','08']
+  advanced:['Tuning helpers','Additional calculation and reporting utilities.','08'],
+  horsepower:['Diesel HP estimator','Compare stock and tuned values with transparent assumptions and plausibility checks.','09']
  };
  const heading=document.getElementById('workspaceHeading');
  function setHeading(id){const m=meta[id]||meta.eoi;heading.querySelector('.eyebrow').textContent='Calibration workspace / '+m[2];heading.querySelector('h2').textContent=m[0];heading.querySelector('p').textContent=m[1];document.title=m[0]+' — Diesel ECU Workbench';}

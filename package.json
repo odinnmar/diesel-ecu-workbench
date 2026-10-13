@@ -1,14 +1,15 @@
 {
   "name": "diesel-ecu-workbench",
-  "version": "1.1.1",
-  "description": "Professional offline Diesel ECU calibration workspace",
+  "version": "1.2.0",
+  "description": "Offline diesel ECU calibration workspace with HP estimator and automatic updates",
   "main": "main.js",
   "author": "Diesel ECU Workbench",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win nsis --publish never"
+    "dist:win": "electron-builder --win nsis --publish never",
+    "publish:win": "electron-builder --win nsis --publish always"
   },
   "devDependencies": {
     "electron": "^35.0.0",
@@ -24,6 +25,7 @@
     "files": [
       "main.js",
       "index.html",
+      "hp-estimator.html",
       "app.ico",
       "package.json"
     ],
@@ -48,6 +50,22 @@
       "shortcutName": "Diesel ECU Workbench",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "odinnmar",
+        "repo": "diesel-ecu-workbench",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/odinnmar/diesel-ecu-workbench.git"
+  },
+  "homepage": "https://github.com/odinnmar/diesel-ecu-workbench",
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   }
 }
