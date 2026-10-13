@@ -9,7 +9,9 @@
 <div class="field"><label for="factoryHp">Factory rated power (mechanical HP)</label><input id="factoryHp" type="number" min="1" step="1" value="163"></div>
 <div class="field"><label for="factoryNm">Factory rated torque (Nm)</label><input id="factoryNm" type="number" min="0" step="1" value="350"><small>Reference only; peak torque and peak power usually occur at different RPM.</small></div>
 <div class="field"><label for="engine">Engine / hardware notes</label><input id="engine" type="text" placeholder="e.g. M57D25, stock turbo"></div>
-<div class="field"><label for="loss">Assumed drivetrain loss (%)</label><input id="loss" type="number" min="0" max="40" step="0.5" value="15"><small>Wheel figure is illustrative only; loss is not a fixed constant.</small></div>
+<div class="field"><label for="drivetrain">Drivetrain preset</label><select id="drivetrain"><option value="fwd">FWD — front-wheel drive (12%)</option><option value="rwd" selected>RWD — rear-wheel drive (15%)</option><option value="awd">AWD / 4WD (22%)</option><option value="custom">Custom loss</option></select><small>Common rough assumptions, not guaranteed values for every car.</small></div>
+<div class="field"><label for="loss">Assumed drivetrain loss (%)</label><input id="loss" type="number" min="0" max="40" step="0.5" value="15"><small>Editable. Changing this switches the preset to Custom.</small></div>
+<div class="field full"><div class="status" id="drivetrainInfo">RWD preset: 15% illustrative loss. Actual chassis, transmission, tyres, temperature and dyno type can change the result. This is a calculation assumption, not a measured drivetrain loss.</div></div>
 </div></section>
 <section class="card"><div class="cardhead"><h2>Stock vs tuned injection quantity</h2><span class="tag">02 / IQ</span></div><p class="help">Enter effective delivered fuel quantity at comparable RPM/load—not merely the highest value anywhere in a driver-wish or limiter map. If you only have map ceilings, mark them as unverified below.</p><div class="fields">
 <div class="field"><label for="stockIq">Stock IQ (mg/stroke)</label><input id="stockIq" type="number" min="0.1" step="0.1" value="57"></div>
@@ -43,6 +45,27 @@
 <script>
 'use strict';
 const $=id=>document.getElementById(id);const val=id=>{const x=parseFloat($(id).value);return Number.isFinite(x)?x:0};const f=(x,d=0)=>Number.isFinite(x)?x.toFixed(d):'—';const pct=x=>(x>=0?'+':'')+f(x,1)+'%';
+const drivetrainPresets = {
+  fwd: { loss: 12, title: 'FWD', text: 'FWD preset: 12% illustrative loss. Front-wheel-drive layouts often use a lower rule-of-thumb than AWD, but actual losses vary by gearbox, differential, tyres and dyno.' },
+  rwd: { loss: 15, title: 'RWD', text: 'RWD preset: 15% illustrative loss. This is a common rough assumption, not a measured value; transmission, differential, tyres and dyno setup can shift it.' },
+  awd: { loss: 22, title: 'AWD / 4WD', text: 'AWD / 4WD preset: 22% illustrative loss. AWD systems often use a higher rule-of-thumb because more driveline components are involved, but the actual figure varies widely.' }
+};
+function applyDrivetrainPreset() {
+  const key = $('drivetrain').value;
+  const preset = drivetrainPresets[key];
+  if (preset) {
+    $('loss').value = preset.loss;
+    $('drivetrainInfo').textContent = preset.text + ' Treat the wheel-HP figure as illustrative only.';
+  } else {
+    $('drivetrainInfo').textContent = 'Custom loss selected. Enter your own assumption. It is still an estimate unless validated for this car and dyno.';
+  }
+  update();
+}
+$('drivetrain').addEventListener('change', applyDrivetrainPreset);
+$('loss').addEventListener('input', () => {
+  if ($('drivetrain').value !== 'custom') $('drivetrain').value = 'custom';
+  $('drivetrainInfo').textContent = 'Custom loss selected. Enter your own assumption. It is still an estimate unless validated for this car and dyno.';
+});
 function update(){
  const hp=val('factoryHp'),si=val('stockIq'),ti=val('tunedIq'),sb=val('stockBoost'),tb=val('tunedBoost'),amb=val('ambient'),loss=Math.max(0,Math.min(40,val('loss')))/100,sa=val('stockAir'),ta=val('tunedAir'),torque=val('torqueNm'),trpm=val('torqueRpm'),band=Math.max(0,Math.min(30,val('band')))/100;
  const validBase=hp>0&&si>0&&ti>0,iqRatio=validBase?ti/si:0,iqPct=validBase?(iqRatio-1)*100:0,boostRatio=sb>0?tb/sb:0,boostPct=sb>0?(boostRatio-1)*100:0,airRatio=sa>0&&ta>0?ta/sa:0,airPct=airRatio>0?(airRatio-1)*100:0;
@@ -56,6 +79,6 @@ function update(){
  const warnings=[];if($('iqSource').value==='map')warnings.push('IQ values are map ceilings/requests, not verified delivered fuel.');if($('airSource').value==='map')warnings.push('Air values are map estimates, not logged MAF.');if(iqPct>20)warnings.push('Large IQ increase: verify duration, SOI, rail pressure, smoke limit and EGT.');if(airRatio>0&&iqRatio>airRatio*1.1)warnings.push('Fuel ratio rises materially faster than air-mass ratio; check smoke/air limits.');if(boostPct>15)warnings.push('Large boost-request increase: verify actual boost, turbo limits and charge temperature.');if(actual>0&&tb>0&&Math.abs(actual-tb)>150)warnings.push('Logged boost differs from request by over 150 mbar.');$('status').className='status '+(warnings.length?'bad':'');$('status').textContent=warnings.length?warnings.join(' '):'No automatic red flag from these inputs; this does not prove the tune is safe or power claims are accurate.';
 }
 const ids=['factoryHp','factoryNm','engine','loss','stockIq','tunedIq','iqSource','rpm','stockBoost','tunedBoost','ambient','actualBoost','stockAir','tunedAir','airUnit','airSource','calDyno','calStockIq','calTunedIq','calNotes','torqueNm','torqueRpm','band'];ids.forEach(id=>$(id).addEventListener('input',update));ids.forEach(id=>$(id).addEventListener('change',update));
-$('reset').addEventListener('click',()=>{const v={factoryHp:163,factoryNm:350,engine:'',loss:15,stockIq:57,tunedIq:74,iqSource:'map',rpm:3000,stockBoost:2220,tunedBoost:2420,ambient:1000,actualBoost:'',stockAir:850,tunedAir:1000,airUnit:'mg/stroke',airSource:'map',calDyno:'',calStockIq:'',calTunedIq:'',calNotes:'',torqueNm:400,torqueRpm:2500,band:10,dynoWheel:''};Object.entries(v).forEach(([k,x])=>$(k).value=x);update()});
+$('reset').addEventListener('click',()=>{const v={factoryHp:163,factoryNm:350,engine:'',drivetrain:'rwd',loss:15,stockIq:57,tunedIq:74,iqSource:'map',rpm:3000,stockBoost:2220,tunedBoost:2420,ambient:1000,actualBoost:'',stockAir:850,tunedAir:1000,airUnit:'mg/stroke',airSource:'map',calDyno:'',calStockIq:'',calTunedIq:'',calNotes:'',torqueNm:400,torqueRpm:2500,band:10,dynoWheel:''};Object.entries(v).forEach(([k,x])=>$(k).value=x);applyDrivetrainPreset()});
 $('copy').addEventListener('click',async()=>{const s=`Diesel HP Estimator V4 report\nEngine/hardware: ${$('engine').value||'Not specified'}\nFactory rated power: ${$('factoryHp').value} mechanical HP\nStock/tuned IQ: ${$('stockIq').value}/${$('tunedIq').value} mg/stroke (${ $('iqSource').value})\nIQ ratio: ${$('iqRatio').textContent}\nUncalibrated proportional-fuel reference: ${$('factoryHp').value&&$('iqRatio').textContent!=='—'?f(val('factoryHp')*val('tunedIq')/val('stockIq'))+' HP':'Not available'}\nDisplayed scenario: ${$('mainHp').innerText}\nSensitivity band: ${$('lowHp').textContent}–${$('highHp').textContent} (not statistical)\nBoost request stock/tuned: ${$('stockBoost').value}/${$('tunedBoost').value} mbar absolute\nActual boost: ${$('actualBoost').value||'Not entered'} mbar absolute\nAir mass stock/tuned: ${$('stockAir').value}/${$('tunedAir').value} ${$('airUnit').value} (${ $('airSource').value})\nTorque check: ${$('torquePower').textContent} at ${$('torqueRpm').value} RPM\nDyno calibration: ${$('calDyno').value||'None'} HP; notes: ${$('calNotes').value||'None'}\nIMPORTANT: Map-based output is not a dyno prediction. Validate on logs and dyno.`;try{await navigator.clipboard.writeText(s);$('copy').textContent='Copied';setTimeout(()=>$('copy').textContent='Copy report',1600)}catch(e){window.prompt('Copy report',s)}});update();
 </script></body></html>

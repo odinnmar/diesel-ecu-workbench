@@ -28,24 +28,16 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => mainWindow.show());
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://') || url.startsWith('http://')) {
-      shell.openExternal(url);
-    }
+    if (url.startsWith('https://') || url.startsWith('http://')) shell.openExternal(url);
     return { action: 'deny' };
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 function sendUpdateState(state, details = {}) {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('updater:state', {
-      state,
-      version: app.getVersion(),
-      ...details
-    });
+    mainWindow.webContents.send('updater:state', { state, version: app.getVersion(), ...details });
   }
 }
 
@@ -57,27 +49,16 @@ ipcMain.handle('app:get-version', () => ({
 
 ipcMain.handle('updater:check', async () => {
   if (!app.isPackaged || process.platform !== 'win32') {
-    sendUpdateState('unsupported', {
-      message: 'Updates are available in the installed Windows version.'
-    });
+    sendUpdateState('unsupported', { message: 'Updates are available in the installed Windows version.' });
     return { ok: false, state: 'unsupported' };
   }
 
   try {
-    sendUpdateState('checking', {
-      message: 'Checking GitHub Releases…'
-    });
-
+    sendUpdateState('checking', { message: 'Checking GitHub Releases…' });
     const result = await autoUpdater.checkForUpdates();
-
-    return {
-      ok: true,
-      version: result?.updateInfo?.version || app.getVersion()
-    };
+    return { ok: true, version: result?.updateInfo?.version || app.getVersion() };
   } catch (error) {
-    sendUpdateState('error', {
-      message: error.message || 'Could not check for updates.'
-    });
+    sendUpdateState('error', { message: error.message || 'Could not check for updates.' });
     return { ok: false, message: error.message };
   }
 });
@@ -92,13 +73,11 @@ function setupAutoUpdates() {
 
   autoUpdater.on('checking-for-update', () => {
     console.info('[updater] Checking for updates');
-    sendUpdateState('checking', {
-      message: 'Checking GitHub Releases…'
-    });
+    sendUpdateState('checking', { message: 'Checking GitHub Releases…' });
   });
 
   autoUpdater.on('update-available', info => {
-    console.info(`[updater] Update ${info.version} available`);
+    console.info(`[updater] Update ${info.version} available; downloading in background`);
     sendUpdateState('downloading', {
       availableVersion: info.version,
       message: `Version ${info.version} found. Downloading in background…`
@@ -107,9 +86,7 @@ function setupAutoUpdates() {
 
   autoUpdater.on('update-not-available', info => {
     console.info(`[updater] Already current (${info.version})`);
-    sendUpdateState('current', {
-      message: `You're up to date (${info.version}).`
-    });
+    sendUpdateState('current', { message: `You're up to date (${info.version}).` });
   });
 
   autoUpdater.on('download-progress', progress => {
@@ -123,9 +100,7 @@ function setupAutoUpdates() {
 
   autoUpdater.on('error', error => {
     console.warn('[updater] Update failed:', error.message);
-    sendUpdateState('error', {
-      message: `Update failed: ${error.message}`
-    });
+    sendUpdateState('error', { message: `Update failed: ${error.message}` });
   });
 
   autoUpdater.on('update-downloaded', info => {
@@ -138,7 +113,6 @@ function setupAutoUpdates() {
       message: `Update ${info.version} downloaded. Restarting to install…`
     });
 
-    // Install silently and restart automatically.
     setImmediate(() => {
       autoUpdater.quitAndInstall(true, true);
     });
@@ -146,7 +120,6 @@ function setupAutoUpdates() {
 
   const check = () => {
     if (isInstallingUpdate) return;
-
     autoUpdater.checkForUpdates().catch(error => {
       console.warn('[updater] Update check unavailable:', error.message);
     });
@@ -162,9 +135,7 @@ app.whenReady().then(() => {
   setupAutoUpdates();
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
