@@ -106,22 +106,47 @@ body.theme-horsepower .workspace-heading{border-bottom-color:#5d3b23}
 body.theme-horsepower .workspace-heading .live-chip{color:#ffd1a0}
 @media(max-width:760px){header:before{width:34px;height:34px;flex-basis:34px;border-radius:11px}.workspace-heading:after{right:-100px}}
 
+
+/* Simplified navigation: group related tools and keep the sidebar scannable. */
+#tabs{gap:12px}
+.nav-group{border:1px solid #202c38;border-radius:10px;padding:5px;background:#0d151e}
+.nav-group summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:9px 10px;color:#a9bac9;font-size:10px;font-weight:850;letter-spacing:1.1px;text-transform:uppercase;user-select:none}
+.nav-group summary::-webkit-details-marker{display:none}
+.nav-group summary:after{content:"+";font-size:15px;color:#6e8797;font-weight:500}
+.nav-group[open] summary:after{content:"−"}
+.nav-group-items{display:grid;gap:3px;padding:3px 0 1px}
+.nav-group .tab{margin:0;padding:9px 8px;font-size:12px;gap:8px}
+.nav-group .tab:before{width:20px;height:20px;flex-basis:20px}
+@media(max-width:760px){#tabs{gap:8px}.nav-group{padding:2px;border-radius:8px}.nav-group summary{font-size:0;justify-content:center;padding:6px 0}.nav-group summary:after{font-size:12px}.nav-group .tab{padding:8px 4px;font-size:0;justify-content:center}.nav-group-items{gap:2px}}
+
 </style>
 </head>
 <body>
 <header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.0</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <div class="wrap">
 <div class="workspace-heading" id="workspaceHeading"><div><div class="eyebrow">Calibration workspace / 01</div><h2>Injection timing</h2><p>SOI, duration and end-of-injection calculations in one focused workspace.</p></div><div class="live-chip">LOCAL SESSION READY</div></div>
-<nav id="tabs">
+<nav id="tabs" aria-label="Workbench navigation">
+<details class="nav-group" open>
+<summary>Calculators</summary>
+<div class="nav-group-items">
 <button class="tab active" data-tab="eoi">SOI / EOI</button>
+<button class="tab" data-tab="horsepower">Diesel HP Estimator</button>
+<button class="tab" data-tab="units">Units & Fuel</button>
+</div></details>
+<details class="nav-group">
+<summary>Maps</summary>
+<div class="nav-group-items">
 <button class="tab" data-tab="math">Map Maths</button>
 <button class="tab" data-tab="mapshot">Screenshot Map Extender</button>
 <button class="tab" data-tab="compare">Map Compare</button>
+</div></details>
+<details class="nav-group">
+<summary>Logs & Tools</summary>
+<div class="nav-group-items">
 <button class="tab" data-tab="logs">Log Analysis</button>
-<button class="tab" data-tab="units">Units & Fuel</button>
 <button class="tab" data-tab="project">Project & Checks</button>
 <button class="tab" data-tab="advanced">Tuning Helpers</button>
-<button class="tab" data-tab="horsepower">Diesel HP Estimator</button>
+</div></details>
 </nav>
 
 <section id="eoi" class="active">
@@ -431,7 +456,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const metric=(label,value,unit="")=>`<div class="metric"><small>${label}</small><strong>${value}</strong><em>${unit}</em></div>`;
 const round=(v,d)=>Number.isFinite(v)?Number(v.toFixed(d)):v;
 let eoiRows=[],logRows=[],lastExtrap="",lastTrend="",lastDiff="";
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));if(b.dataset.tab==="eoi")drawEoi();if(b.dataset.tab==="logs")drawLogs();}));
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));const group=b.closest(".nav-group");if(group)group.open=true;if(b.dataset.tab==="eoi")drawEoi();if(b.dataset.tab==="logs")drawLogs();}));
 function durationDeg(d,rpm,unit){if(d==null||rpm==null||!Number.isFinite(d)||!Number.isFinite(rpm)||rpm<=0)return NaN;if(unit==="deg")return d;if(unit==="ms")return d*rpm*6/1000;return d*rpm*6/1000000;}
 function soiToBtdc(v, convention){if(v==null)return NaN;return convention==="signed"?-v:v;}
 function eoiFromSoi(durationDegrees, soiValue, convention){const btdc=soiToBtdc(soiValue,convention);return durationDegrees-btdc;}
