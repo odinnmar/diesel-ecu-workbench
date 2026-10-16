@@ -148,7 +148,69 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.18</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.19</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<script>
+/* Isolated updater UI: deliberately independent of the workbench calculator script. */
+(() => {
+  const btn = document.getElementById('checkUpdates');
+  const status = document.getElementById('updateStatus');
+  const version = document.getElementById('appVersion');
+  if (!btn || !status || !version) return;
+  const setStatus = (message, disabled = false) => {
+    status.textContent = message;
+    btn.disabled = disabled;
+  };
+  const show = payload => {
+    if (!payload) return;
+    if (payload.version) version.textContent = 'v' + payload.version;
+    const messages = {
+      checking: 'Checking GitHub Releases…', current: 'You’re up to date.',
+      downloading: payload.percent != null ? `Downloading update… ${payload.percent}%` : (payload.message || 'Downloading update…'),
+      installing: 'Update downloaded. Restarting to install…',
+      error: payload.message || 'Update check failed.',
+      unsupported: payload.message || 'Updates are available in the installed Windows version.'
+    };
+    status.textContent = payload.message || messages[payload.state] || 'Updater ready';
+    btn.disabled = payload.state === 'checking' || payload.state === 'downloading';
+    btn.textContent = 'Check for updates';
+  };
+  const api = window.workbenchApp;
+  if (!api) {
+    status.textContent = 'Updater bridge unavailable in this run';
+  } else {
+    if (typeof api.onUpdateState === 'function') api.onUpdateState(show);
+    if (typeof api.getVersion === 'function') {
+      api.getVersion().then(info => {
+        if (info && info.version) version.textContent = 'v' + info.version;
+        if (info && (!info.packaged || info.platform !== 'win32')) {
+          status.textContent = 'Updates require the installed Windows app';
+        }
+      }).catch(err => { status.textContent = 'Version check failed: ' + (err.message || err); });
+    }
+  }
+  btn.addEventListener('click', async () => {
+    const bridge = window.workbenchApp;
+    if (!bridge || typeof bridge.checkForUpdates !== 'function') {
+      setStatus('Updater bridge unavailable. Reinstall the Windows build.');
+      return;
+    }
+    btn.textContent = 'Checking…';
+    setStatus('Checking GitHub Releases…', true);
+    try {
+      const result = await bridge.checkForUpdates();
+      if (result && result.state) show({state: result.state, message: result.message, version: result.version});
+      else if (result && result.ok) {
+        // The updater events provide the final state; avoid leaving a stale checking message.
+        setStatus('Check requested. Waiting for GitHub response…', false);
+      } else {
+        show({state: 'error', message: (result && result.message) || 'Could not check for updates.'});
+      }
+    } catch (err) {
+      show({state: 'error', message: (err && err.message) || 'Could not check for updates.'});
+    }
+  });
+})();
+</script>
 <div class="wrap">
 <div class="workspace-heading" id="workspaceHeading"><div><div class="eyebrow">Calibration workspace / 01</div><h2>Injection timing</h2><p>SOI, duration and end-of-injection calculations in one focused workspace.</p></div><div class="live-chip">LOCAL SESSION READY</div></div>
 <nav id="tabs" aria-label="Workbench navigation">
@@ -842,14 +904,6 @@ mapShotBuildGrid();
  function setHeading(id){const m=meta[id]||meta.eoi;document.body.className=document.body.className.replace(/\btheme-[a-z]+\b/g,'').trim();document.body.classList.add('theme-'+id);heading.querySelector('.eyebrow').textContent='Calibration workspace / '+m[2];heading.querySelector('h2').textContent=m[0];heading.querySelector('p').textContent=m[1];document.title=m[0]+' — Diesel ECU Workbench';}
  document.querySelectorAll('#tabs .tab').forEach(b=>{b.setAttribute('aria-label',b.textContent.trim());b.title=b.textContent.trim();b.addEventListener('click',()=>setHeading(b.dataset.tab));});
  setHeading(document.querySelector('#tabs .tab.active')?.dataset.tab||'eoi');
-})();
-
-// Visible updater status and manual update check (packaged Windows builds only).
-(function(){
- const btn=document.getElementById('checkUpdates'), status=document.getElementById('updateStatus'), version=document.getElementById('appVersion');
- function show(payload){if(!payload)return; if(payload.version)version.textContent='v'+payload.version; status.textContent=payload.message||({checking:'Checking for updates…',current:'Up to date',downloading:'Downloading update…',ready:'Update ready to install',error:'Update check failed',unsupported:'Updates unavailable in this run'}[payload.state]||'Updater ready'); btn.disabled=payload.state==='checking'||payload.state==='downloading'; if(payload.state==='ready'){btn.disabled=false;btn.textContent='Update ready';}else if(payload.state!=='downloading'&&payload.state!=='checking'){btn.textContent='Check for updates';}}
- if(window.workbenchApp){window.workbenchApp.getVersion().then(info=>{if(info?.version)version.textContent='v'+info.version;if(!info?.packaged||info.platform!=='win32')status.textContent='Updater available in installed Windows build';}).catch(()=>{status.textContent='Version unavailable'});window.workbenchApp.onUpdateState(show);}
- btn.addEventListener('click',async()=>{if(!window.workbenchApp){status.textContent='Updater bridge unavailable. Reinstall the latest build.';return;}btn.disabled=true;status.textContent='Checking GitHub Releases…';try{const result=await window.workbenchApp.checkForUpdates();if(!result?.ok&&!result?.state)show({state:'error',message:result?.message||'Could not check for updates.'});}catch(e){show({state:'error',message:e.message||'Could not check for updates.'});}});
 })();
 
 refreshEoiInputs();
