@@ -119,6 +119,32 @@ body.theme-horsepower .workspace-heading .live-chip{color:#ffd1a0}
 .nav-group .tab:before{width:20px;height:20px;flex-basis:20px}
 @media(max-width:760px){#tabs{gap:8px}.nav-group{padding:2px;border-radius:8px}.nav-group summary{font-size:0;justify-content:center;padding:6px 0}.nav-group summary:after{font-size:12px}.nav-group .tab{padding:8px 4px;font-size:0;justify-content:center}.nav-group-items{gap:2px}}
 
+
+/* Premium refinement layer: consistent rhythm, clearer hierarchy, restrained highlights. */
+:root{--accent:#65d9bd;--good:#65d9bd;--radius:14px;--focus-ring:#65d9bd30}
+::selection{background:#286d64;color:#fff}
+:focus-visible{outline:2px solid #75e2ca!important;outline-offset:2px}
+.wrap{padding-top:24px;max-width:1660px}
+.workspace-heading{margin:0 0 22px;padding:19px 22px;border:1px solid #283945;border-radius:15px;background:linear-gradient(115deg,#14221f 0%,#111b22 55%,#101720 100%);box-shadow:0 10px 28px #0002}
+.workspace-heading h2{font-size:22px;letter-spacing:-.5px;margin:3px 0 5px}.workspace-heading p{max-width:760px;line-height:1.6}
+.eyebrow{font-size:10px;letter-spacing:1.6px;color:#76d9c1;font-weight:800;text-transform:uppercase}
+.live-chip{border:1px solid #2b5c50;background:#102720;color:#8ae6d0;border-radius:999px;padding:7px 10px;font-size:10px;letter-spacing:.7px;font-weight:750}
+.grid{gap:16px}.card{padding:20px;border-color:#273541;background:linear-gradient(155deg,#131d27,#101720 76%);box-shadow:0 8px 24px #00000016}.card:hover{border-color:#365448;box-shadow:0 12px 28px #0002}
+.card h2{display:flex;align-items:center;gap:9px;font-size:15px;letter-spacing:-.15px;margin-bottom:10px}.card h2:before{content:"";width:3px;height:16px;border-radius:3px;background:#62cdb2;flex:0 0 3px}
+.sub{font-size:12px;line-height:1.6;color:#94a5b5;margin:0 0 16px}
+.fields{gap:12px}.fields.three,.fields.four{gap:12px}
+label{font-size:11px;font-weight:650;letter-spacing:.15px;color:#aab9c7;margin-bottom:6px}
+input,select,textarea{background:#0b1219;border-color:#2c3a47;border-radius:8px;padding:10px 12px;min-height:39px}input:hover,select:hover,textarea:hover{border-color:#405b62}input:focus,select:focus,textarea:focus{border-color:#67d9bd;box-shadow:0 0 0 3px #65d9bd20}
+button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter-spacing:.1px}button:hover{box-shadow:0 5px 15px #0003}button.secondary{background:#18222d;border-color:#344350}button.danger{background:#351e23;border-color:#70424a}
+.actions{gap:9px;margin-top:15px}.results{gap:10px}.metric{border-radius:10px;background:linear-gradient(145deg,#111c25,#0d151d);border-color:#2a3945;padding:13px}.metric small{letter-spacing:.7px;font-size:10px}.metric strong{font-size:22px;letter-spacing:-.4px}.metric em{line-height:1.5}
+.notice{border-radius:0 9px 9px 0;background:#13241f;border-color:#4bb79c;color:#c9e9e0;line-height:1.65;padding:11px 13px}.notice.warn{background:#292216;border-color:#d3a85c;color:#f1dfbd}.notice.bad{background:#2b1b20;border-color:#d66d79;color:#f2cbd0}.notice.good{background:#13261f;border-color:#58bd9e;color:#c8f0e2}
+.checkrow{background:#111b24;border-color:#2b3b47;line-height:1.55}.pill{padding:4px 8px}.foot{line-height:1.7;border-top:1px solid #263440;padding-top:14px}
+.interp-points{display:grid;grid-template-columns:1fr 1fr;gap:12px}.interp-point{border:1px solid #2b3a46;background:#0d151d;border-radius:11px;padding:14px}.point-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.point-title span,.answer-label{font-size:10px;font-weight:850;letter-spacing:1.2px;color:#7cdec6}.point-title small{font-size:10px;color:#788b9c}.interp-target{grid-column:1/-1;padding:14px;border:1px solid #2b4b46;background:linear-gradient(110deg,#10251f,#101a20);border-radius:11px}.interp-target input{max-width:320px;font-size:18px;font-weight:700}.interp-target .muted{margin-top:6px}.interp-answer{margin-top:14px;border:1px solid #2c5149;background:linear-gradient(115deg,#10271f,#101b21);border-radius:12px;padding:16px 18px;display:grid;gap:4px}.interp-answer strong{font-size:32px;line-height:1.25;letter-spacing:-1px;font-variant-numeric:tabular-nums}.answer-note{font-size:11px;color:#9bb9b2}.answer-note.warning{color:#f1c46d}
+.tablewrap{border-color:#2b3a46}th{background:#131e27;color:#b9c8d4;position:sticky;top:0}th,td{padding:9px;border-bottom-color:#263541}
+@media(max-width:1000px){.wrap{margin-left:0;padding:18px}.interp-points{grid-template-columns:1fr 1fr}#tabs{position:sticky;top:72px;width:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px;margin:0 -18px 18px;border:0;border-bottom:1px solid #263440}#tabs:before,#tabs:after{display:none}.tab{width:auto;white-space:nowrap;flex:0 0 auto}.workspace-heading{margin-top:12px}}
+@media(max-width:600px){header{padding:0 14px;gap:8px}header:after{display:none}.update-controls{gap:6px}.update-controls #updateStatus{display:none}.wrap{padding:12px}.workspace-heading{padding:15px;align-items:flex-start}.live-chip{display:none}.interp-points{grid-template-columns:1fr}.interp-target{grid-column:auto}.card{padding:15px}.fields.three,.fields.four{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -260,11 +286,23 @@ body.theme-horsepower .workspace-heading .live-chip{color:#ffd1a0}
 <div class="notice warn">Extrapolation is mathematics, not a calibration recommendation. Never extend a map blindly past its validated operating range.</div>
 </div>
 <div class="card span6">
-<h2>Estimate a value between two known points</h2><p class="sub">Use this when you know the values at two RPM or load points and want a straight-line estimate between them.</p><div class="notice">Example: if a value is 50 at 2000 rpm and 44.5 at 2500 rpm, enter those as X₁/Y₁ and X₂/Y₂, then enter 2250 as Target X.</div>
-<div class="fields three">
-<div><label>X₁</label><input id="ix1" type="number" value="2000"></div><div><label>Y₁</label><input id="iy1" type="number" value="50"></div><div><label>X₂</label><input id="ix2" type="number" value="2500"></div><div><label>Y₂</label><input id="iy2" type="number" value="44.5"></div><div><label>Target X</label><input id="ix" type="number" value="2250"></div><div><label>Decimals</label><select id="idec"><option>0</option><option selected>2</option><option>3</option><option>4</option></select></div>
+<h2>Interpolate from a map or list</h2>
+<p class="sub">Paste the X-axis breakpoints and matching Y values. Enter the target X once; the calculator finds the two surrounding points automatically.</p>
+<div class="notice"><b>How to use:</b> Keep the X and Y lists in the same order. For example, X = RPM breakpoints and Y = the map values at those RPMs. The tool chooses the correct pair for you.</div>
+<div class="fields">
+<div><label for="interpXs">X values · breakpoints</label><textarea id="interpXs" rows="4" spellcheck="false">1500
+2000
+2500
+3000</textarea><small class="muted">Paste one per line, or separate with spaces, commas or tabs.</small></div>
+<div><label for="interpYs">Y values · matching map values</label><textarea id="interpYs" rows="4" spellcheck="false">54
+50
+44.5
+41</textarea><small class="muted">Must contain the same number of values as X.</small></div>
+<div><label for="interpTarget">Target X value</label><input id="interpTarget" type="number" value="2250" step="any"><small class="muted">The RPM/load/breakpoint where you want an estimate.</small></div>
+<div><label for="interpDecimals">Result precision</label><select id="interpDecimals"><option>0</option><option selected>2</option><option>3</option><option>4</option><option>6</option></select><small class="muted">Choose how many decimal places to show.</small></div>
 </div>
-<div class="actions"><button id="runInterp">Calculate interpolation</button></div><div id="interpResult" class="results"></div>
+<div id="interpResult" class="interp-answer" aria-live="polite"><span class="answer-label">CALCULATED Y</span><strong id="interpY">47.25</strong><span id="interpMethod" class="answer-note">Between X = 2000 and X = 2500</span></div>
+<div class="small muted" style="margin-top:10px">X values can be ascending or descending. Targets outside the entered range are flagged as extrapolation. Duplicate X values and mismatched list lengths are rejected.</div>
 </div>
 <div class="card span6">
 <h2>Estimate the overall trend</h2><p class="sub">Paste a sequence of numbers, one per line. This smooths the trend across all entered values and predicts what comes next.</p>
@@ -509,7 +547,10 @@ $("exportEoi").onclick=()=>downloadCsv("eoi_points.csv",["rpm","stock_iq_mg_stro
 function parseNumbers(s){const tokens=s.trim().split(/[\s,;]+/).filter(Boolean);if(!tokens.length)return [];const vals=tokens.map(x=>Number(x));return vals.every(Number.isFinite)?vals:[]}
 $("runExtrap").onclick=()=>{let p=num("exPrev"),l=num("exLast"),m=num("exMult")??1,pct=num("exPct"),n=Math.max(1,Math.min(100,Math.floor(num("exCount")||1))),d=+$("exDec").value;if(p==null||l==null||!Number.isFinite(m)||!Number.isFinite(n)||n<1||(pct!=null&&pct<=-100)){ $("extrapOut").textContent="Enter valid previous/last values, a finite multiplier, 1–100 future points, and percentage change greater than −100%.";return}let step=l-p,vals=[];for(let i=1;i<=n;i++){let v=pct!=null?l*Math.pow(1+pct/100,i):l+step*m*i;vals.push(round(v,d))}lastExtrap=vals.join("\t");$("extrapOut").textContent=`Observed step: ${fmt(step,d)}\nRule: ${pct!=null?"percentage change":"last + (last − previous) × multiplier"}\nPredictions: ${vals.join("   ")}`;$("extrapResults").innerHTML=[metric("Last known",fmt(l,d)),metric("Linear step",fmt(step*m,d)),metric("Next value",fmt(vals[0],d)),metric("Last prediction",fmt(vals.at(-1),d))].join("")};
 $("copyExtrap").onclick=()=>copyText(lastExtrap);
-$("runInterp").onclick=()=>{let x1=num("ix1"),y1=num("iy1"),x2=num("ix2"),y2=num("iy2"),x=num("ix"),d=+$("idec").value;if([x1,y1,x2,y2,x].some(v=>v==null)||x1===x2){$("interpResult").innerHTML=metric("Result","Invalid","X₁ and X₂ must differ");return}let y=y1+(x-x1)*(y2-y1)/(x2-x1);$("interpResult").innerHTML=[metric("Interpolated Y",fmt(y,d)),metric("Position",fmt((x-x1)/(x2-x1)*100,1),"% of interval"),metric("Method",x>=Math.min(x1,x2)&&x<=Math.max(x1,x2)?"Interpolation":"Extrapolation")].join("")};
+function parseInterpolationList(text){const tokens=text.trim().split(/[\s,;]+/).filter(Boolean);if(!tokens.length)return null;const values=tokens.map(Number);return values.every(Number.isFinite)?values:null}
+function calculateInterpolation(){const answer=$("interpY"),method=$("interpMethod"),xs=parseInterpolationList($("interpXs").value),ys=parseInterpolationList($("interpYs").value),targetText=$("interpTarget").value.trim(),target=targetText===""?null:Number(targetText),decimals=Number($("interpDecimals").value);answer.textContent="—";method.classList.remove("warning");if(!xs||!ys||xs.length<2||xs.length!==ys.length){method.textContent="Enter matching X and Y lists with at least two valid points.";return}if(target===null||!Number.isFinite(target)){method.textContent="Enter a valid target X value.";return}if(new Set(xs).size!==xs.length){method.textContent="X values must be unique; duplicate breakpoints found.";return}const points=xs.map((x,i)=>({x,y:ys[i]})).sort((a,b)=>a.x-b.x);let a,b,extrap=false;if(target<points[0].x){a=points[0];b=points[1];extrap=true}else if(target>points[points.length-1].x){a=points[points.length-2];b=points[points.length-1];extrap=true}else{let exact=points.find(p=>p.x===target);if(exact){answer.textContent=Number(exact.y.toFixed(decimals)).toString();method.textContent=`Exact match at X = ${exact.x}; no interpolation needed.`;return}for(let i=0;i<points.length-1;i++){if(target>points[i].x&&target<points[i+1].x){a=points[i];b=points[i+1];break}}}if(!a||!b||a.x===b.x){method.textContent="Could not find a valid pair of surrounding points.";return}const y=a.y+(target-a.x)*(b.y-a.y)/(b.x-a.x);answer.textContent=Number(y.toFixed(decimals)).toString();method.textContent=`${extrap?"Extrapolation outside the entered range":"Interpolated automatically between X = "+a.x+" and X = "+b.x} · using Y values ${a.y} and ${b.y}${extrap?" — review carefully":""}`;method.classList.toggle("warning",extrap)}
+["interpXs","interpYs","interpTarget","interpDecimals"].forEach(id=>$(id).addEventListener("input",calculateInterpolation));
+calculateInterpolation();
 function regression(vals){let n=vals.length,xbar=(n-1)/2,ybar=vals.reduce((a,b)=>a+b,0)/n,nume=0,den=0;for(let i=0;i<n;i++){nume+=(i-xbar)*(vals[i]-ybar);den+=(i-xbar)**2}let slope=den?nume/den:0;return {slope,intercept:ybar-slope*xbar}}
 $("runTrend").onclick=()=>{let vals=parseNumbers($("trendValues").value),n=Math.max(1,Math.min(100,Math.floor(num("trendCount")||1))),d=+$("trendDec").value;if(vals.length<2){$("trendResult").textContent="Enter at least two values.";return}let {slope,intercept}=regression(vals),pred=Array.from({length:n},(_,i)=>round(intercept+slope*(vals.length+i),d));lastTrend=pred.join("\t");$("trendResult").textContent=`Values: ${vals.length} • Fitted step: ${fmt(slope,d)} per row • Predictions: ${pred.join("   ")}\nThis smooths the full sequence; it may differ from simple last-minus-previous extrapolation.`};
 $("copyTrend").onclick=()=>copyText(lastTrend);
