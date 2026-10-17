@@ -148,7 +148,7 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.19</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.20</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <script>
 /* Isolated updater UI: deliberately independent of the workbench calculator script. */
 (() => {
@@ -200,8 +200,9 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
       const result = await bridge.checkForUpdates();
       if (result && result.state) show({state: result.state, message: result.message, version: result.version});
       else if (result && result.ok) {
-        // The updater events provide the final state; avoid leaving a stale checking message.
-        setStatus('Check requested. Waiting for GitHub response…', false);
+        // Do not overwrite update-not-available/update-available/error events: electron-updater
+        // may emit its final state before the IPC promise resolves.
+        btn.textContent = 'Check for updates';
       } else {
         show({state: 'error', message: (result && result.message) || 'Could not check for updates.'});
       }
@@ -246,10 +247,10 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 <div><label>Engine speed (rpm)</label><input id="rpm" type="number" value="2500" step="50"></div>
 <div><label>Stock duration from stock duration map</label><input id="oriDur" type="number" placeholder="Enter stock map value" step="any"></div>
 <div><label id="tunedDurationLabel">Tuned duration from tuned duration map</label><input id="dur" type="number" placeholder="Enter actual tuned map value" step="any"></div>
-<div><label>Duration unit / scaling</label><select id="durUnit"><option value="us">Microseconds (µs)</option><option value="ms">Milliseconds (ms)</option><option value="deg">Crank degrees (°)</option></select></div>
+<div><label>Duration unit / scaling</label><select id="durUnit"><option value="us">Microseconds (µs)</option><option value="ms">Milliseconds (ms)</option><option value="deg">Crank degrees (°)</option><option value="mghub">mg/hub (fuel quantity, not duration)</option></select></div>
 <div style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px"><input id="estimateDurationFromIq" type="checkbox" style="width:auto"> Estimate tuned duration from IQ ratio (optional)</label><div id="durationModeNote" class="notice" style="margin-top:8px">Normal mode: enter the actual tuned duration from your extended duration map. IQ does not overwrite it.</div></div>
-<div><label>SOI value convention</label><select id="soiConvention"><option value="btdc">BTDC entered as positive (e.g. 9.49)</option><option value="signed">Signed crank angle (BTDC negative, e.g. −9.49)</option></select></div>
-<div class="notice" style="grid-column:1/-1"><b>EOI formula:</b> EOI relative to TDC = duration in crank degrees − SOI in positive BTDC convention. If your SOI values are signed angles (BTDC negative), choose Signed and the tool converts the sign. This is only valid if the entered duration is the effective injection duration in the selected units.</div>
+<div><label>SOI value convention</label><select id="soiConvention"><option value="signed" selected>Signed crank angle (BTDC negative, e.g. −9.49)</option><option value="btdc">BTDC entered as positive (e.g. 9.49)</option></select></div>
+<div class="notice" style="grid-column:1/-1"><b>EOI formula:</b> EOI relative to TDC = duration in crank degrees − SOI in positive BTDC convention. Signed convention is selected by default for maps storing BTDC as negative. If your SOI values are positive BTDC, choose Positive. This is only valid if the entered duration is the effective injection duration in the selected units.</div>
 <div><label>Stock SOI (value as stored/displayed)</label><input id="oriSoi" type="number" placeholder="Check map sign convention" step=".01"></div>
 <div><label>Tuned SOI (value as stored/displayed)</label><input id="modSoi" type="number" placeholder="Check map sign convention" step=".01"></div>
 <div><label>Desired EOI (optional)</label><input id="targetEoi" type="number" placeholder="e.g. 14" step=".1"></div>
@@ -568,7 +569,7 @@ const metric=(label,value,unit="")=>`<div class="metric"><small>${label}</small>
 const round=(v,d)=>Number.isFinite(v)?Number(v.toFixed(d)):v;
 let eoiRows=[],logRows=[],lastExtrap="",lastTrend="",lastDiff="";
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));const group=b.closest(".nav-group");if(group)group.open=true;if(b.dataset.tab==="eoi")drawEoi();if(b.dataset.tab==="logs")drawLogs();}));
-function durationDeg(d,rpm,unit){if(d==null||rpm==null||!Number.isFinite(d)||!Number.isFinite(rpm)||rpm<=0)return NaN;if(unit==="deg")return d;if(unit==="ms")return d*rpm*6/1000;return d*rpm*6/1000000;}
+function durationDeg(d,rpm,unit){if(d==null||rpm==null||!Number.isFinite(d)||!Number.isFinite(rpm)||rpm<=0||unit==="mghub")return NaN;if(unit==="deg")return d;if(unit==="ms")return d*rpm*6/1000;return d*rpm*6/1000000;}
 function soiToBtdc(v, convention){if(v==null)return NaN;return convention==="signed"?-v:v;}
 function eoiFromSoi(durationDegrees, soiValue, convention){const btdc=soiToBtdc(soiValue,convention);return durationDegrees-btdc;}
 function targetSoiValue(durationDegrees,targetEoi,convention){const btdc=durationDegrees-targetEoi;return convention==="signed"?-btdc:btdc;}
@@ -583,24 +584,30 @@ function effectiveTunedDuration(){
 function refreshEoiInputs(){
   const estimating = $("estimateDurationFromIq").checked;
   const durationInput = $("dur");
+  const unit = $("durUnit").value;
+  const quantityOnly = unit === "mghub";
   const estimate = estimatedTunedDurationFromIq();
-  durationInput.readOnly = estimating;
+  $("estimateDurationFromIq").disabled = quantityOnly;
+  if (quantityOnly && estimating) $("estimateDurationFromIq").checked = false;
+  durationInput.readOnly = estimating && !quantityOnly;
   $("tunedDurationLabel").textContent = estimating ? "Estimated tuned duration from IQ ratio" : "Tuned duration from tuned duration map";
   if (estimating) durationInput.value = estimate == null ? "" : String(Number(estimate.toFixed(6)));
-  $("durationModeNote").className = estimating ? "notice warn" : "notice";
-  $("durationModeNote").innerHTML = estimating
-    ? "Estimate mode: tuned duration = stock duration × (tuned IQ ÷ stock IQ). This is a rough linear estimate, not injector calibration."
-    : "Normal mode: enter the actual tuned duration from your extended duration map. IQ does not overwrite it.";
+  $("durationModeNote").className = (estimating || quantityOnly) ? "notice warn" : "notice";
+  $("durationModeNote").innerHTML = quantityOnly
+    ? "mg/hub is injected fuel quantity, not injection duration. It cannot be converted to crank degrees or EOI by a unit multiplier. Select µs, ms, or crank degrees for actual duration values. If this Skoda map's cells are mg/hub, use those values as fuel quantity/IQ data only; a valid duration map or ECU-specific conversion is required for EOI."
+    : estimating
+      ? "Estimate mode: tuned duration = stock duration × (tuned IQ ÷ stock IQ). This is a rough linear estimate, not injector calibration."
+      : "Normal mode: enter the actual duration value from your map. IQ does not overwrite it.";
   calculateEoi();
 }
-function calculateEoi(){let rpm=num("rpm"),od=num("oriDur"),d=effectiveTunedDuration(),os=num("oriSoi"),ms=num("modSoi"),unit=$("durUnit").value,conv=$("soiConvention").value;let odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let oe=eoiFromSoi(odeg,os,conv),me=eoiFromSoi(mdeg,ms,conv);let target=num("targetEoi");let required=Number.isFinite(mdeg)&&target!=null?targetSoiValue(mdeg,target,conv):null; $("eoiResults").innerHTML=[metric("Stock duration in crank angle",fmt(odeg),"°"),metric("Estimated tuned duration in crank angle",fmt(mdeg),"°"),metric("Stock EOI",fmt(oe),"° relative to TDC"),metric("Tuned EOI",fmt(me),"° relative to TDC"),metric("EOI change",fmt(me-oe),"° (negative = earlier)"),metric("SOI for target EOI",required==null?"—":fmt(required),conv==="signed"?"signed ° (BTDC negative)":"° BTDC, positive")].join("");let rr=num("railReq"),ra=num("railAct"),br=num("boostReq"),ba=num("boostAct");$("contextResults").innerHTML=[metric("Rail actual − requested",ra==null||rr==null?"—":fmt(ra-rr,0),"bar"),metric("Boost actual − requested",ba==null||br==null?"—":fmt(ba-br,0),"mbar"),metric("MAF actual",num("maf")==null?"—":fmt(num("maf"),1),"mg/stroke")].join("");drawEoi();}
+function calculateEoi(){let rpm=num("rpm"),od=num("oriDur"),d=effectiveTunedDuration(),os=num("oriSoi"),ms=num("modSoi"),unit=$("durUnit").value,conv=$("soiConvention").value;if(unit==="mghub"){ $("eoiResults").innerHTML='<div class="notice warn" style="grid-column:1/-1"><b>EOI unavailable for mg/hub values.</b> mg/hub is fuel quantity, not time. No physically valid duration-to-angle conversion can be calculated from it alone. Select µs, ms, or crank degrees and enter real duration data.</div>';drawEoi();return;}let odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let oe=eoiFromSoi(odeg,os,conv),me=eoiFromSoi(mdeg,ms,conv);let target=num("targetEoi");let required=Number.isFinite(mdeg)&&target!=null?targetSoiValue(mdeg,target,conv):null; $("eoiResults").innerHTML=[metric("Stock duration in crank angle",fmt(odeg),"°"),metric("Tuned duration in crank angle",fmt(mdeg),"°"),metric("Stock EOI",fmt(oe),"° relative to TDC"),metric("Tuned EOI",fmt(me),"° relative to TDC"),metric("EOI change",fmt(me-oe),"° (negative = earlier)"),metric("SOI for target EOI",required==null?"—":fmt(required),conv==="signed"?"signed ° (BTDC negative)":"° BTDC, positive")].join("");let rr=num("railReq"),ra=num("railAct"),br=num("boostReq"),ba=num("boostAct");$("contextResults").innerHTML=[metric("Rail actual − requested",ra==null||rr==null?"—":fmt(ra-rr,0),"bar"),metric("Boost actual − requested",ba==null||br==null?"—":fmt(ba-br,0),"mbar"),metric("MAF actual",num("maf")==null?"—":fmt(num("maf"),1),"mg/stroke")].join("");drawEoi();}
 ["rpm","oriDur","dur","estimateDurationFromIq","durUnit","soiConvention","oriSoi","modSoi","targetEoi","oriIq","iq","railStock","railReq","railAct","boostReq","boostAct","maf"].forEach(id=>$(id).addEventListener("input",()=>{
   if(id==="oriDur"||id==="oriIq"||id==="iq"||id==="durUnit") refreshEoiInputs(); else calculateEoi();
 }));
 $("estimateDurationFromIq").addEventListener("change",refreshEoiInputs);
 ["durUnit","soiConvention"].forEach(id=>$(id).addEventListener("change",refreshEoiInputs));
 $("calcEoi").onclick=refreshEoiInputs;
-function addEoiRow(){let rpm=num("rpm"),od=num("oriDur"),d=effectiveTunedDuration(),unit=$("durUnit").value,conv=$("soiConvention").value,odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let os=num("oriSoi"),ms=num("modSoi");if([rpm,od,d,odeg,mdeg,os,ms].some(x=>x==null||!Number.isFinite(x))||rpm<=0||od<0||d<0){alert("Enter valid positive RPM, non-negative durations, stock SOI and tuned SOI. Confirm duration units and SOI sign convention.");return}eoiRows.push({rpm,iq:num("iq"),oriIq:num("oriIq"),oriDur:odeg,dur:mdeg,ori:eoiFromSoi(odeg,os,conv),mod:eoiFromSoi(mdeg,ms,conv),railStock:num("railStock"),railReq:num("railReq"),railAct:num("railAct"),boostReq:num("boostReq"),boostAct:num("boostAct"),maf:num("maf"),note:$("pointNote").value,durationMode:$("estimateDurationFromIq").checked?"iq-ratio-estimate":"manual-map-duration"});renderEoiTable();drawEoi();$("sessionStatus").textContent=`Added EOI point at ${rpm} rpm.`}
+function addEoiRow(){let rpm=num("rpm"),od=num("oriDur"),d=effectiveTunedDuration(),unit=$("durUnit").value,conv=$("soiConvention").value,odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let os=num("oriSoi"),ms=num("modSoi");if(unit==="mghub"){alert("mg/hub is fuel quantity, not duration. Select a real duration unit before adding an EOI point.");return}if([rpm,od,d,odeg,mdeg,os,ms].some(x=>x==null||!Number.isFinite(x))||rpm<=0||od<0||d<0){alert("Enter valid positive RPM, non-negative durations, stock SOI and tuned SOI. Confirm duration units and SOI sign convention.");return}eoiRows.push({rpm,iq:num("iq"),oriIq:num("oriIq"),oriDur:odeg,dur:mdeg,ori:eoiFromSoi(odeg,os,conv),mod:eoiFromSoi(mdeg,ms,conv),railStock:num("railStock"),railReq:num("railReq"),railAct:num("railAct"),boostReq:num("boostReq"),boostAct:num("boostAct"),maf:num("maf"),note:$("pointNote").value,durationMode:$("estimateDurationFromIq").checked?"iq-ratio-estimate":"manual-map-duration"});renderEoiTable();drawEoi();$("sessionStatus").textContent=`Added EOI point at ${rpm} rpm.`}
 $("addEoi").onclick=addEoiRow;$("clearEoi").onclick=()=>{eoiRows=[];renderEoiTable();drawEoi()};
 function renderEoiTable(){let body=$("eoiTable").querySelector("tbody");body.innerHTML=eoiRows.map((r,i)=>`<tr><td>${r.rpm}</td><td>${r.oriIq??"—"}</td><td>${r.iq??"—"}</td><td>${fmt(r.oriDur??r.dur)}</td><td>${fmt(r.dur)}</td><td>${fmt(r.ori)}</td><td>${fmt(r.mod)}</td><td>${r.railAct==null||r.railReq==null?"—":fmt(r.railAct-r.railReq,0)}</td><td>${r.boostAct==null||r.boostReq==null?"—":fmt(r.boostAct-r.boostReq,0)}</td><td><button class="danger" data-del-eoi="${i}">×</button></td></tr>`).join("");body.querySelectorAll("[data-del-eoi]").forEach(b=>b.onclick=()=>{eoiRows.splice(+b.dataset.delEoi,1);renderEoiTable();drawEoi()})}
 function drawChart(canvasId,series,yLabel){let c=$(canvasId),ctx=c.getContext("2d"),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#0a1220";ctx.fillRect(0,0,w,h);let all=series.flatMap(s=>s.data.filter(p=>Number.isFinite(p.y)).map(p=>p.y));if(!all.length){ctx.fillStyle="#a5b4ce";ctx.font="14px sans-serif";ctx.fillText("Add data points to display chart",22,30);return}let min=Math.min(...all),max=Math.max(...all);if(min===max){min-=1;max+=1}let pad={l:55,r:18,t:20,b:35},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;ctx.strokeStyle="#24334c";ctx.fillStyle="#a5b4ce";ctx.font="11px sans-serif";for(let i=0;i<=4;i++){let y=pad.t+ph*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(fmt(max-(max-min)*i/4,1),5,y+4)}let xVals=[...new Set(series.flatMap(s=>s.data.map(p=>p.x)).filter(Number.isFinite))].sort((a,b)=>a-b);let xmin=xVals.length?Math.min(...xVals):0,xmax=xVals.length?Math.max(...xVals):1;if(xmin===xmax)xmax=xmin+1;ctx.fillText(String(xmin),pad.l,h-12);ctx.fillText(String(xmax),w-pad.r-30,h-12);series.forEach((s,si)=>{ctx.strokeStyle=["#70b7ff","#65d6a4","#ffc56b","#ff8585"][si%4];ctx.fillStyle=ctx.strokeStyle;ctx.lineWidth=2;ctx.beginPath();let started=false;s.data.forEach(p=>{if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return;let x=pad.l+(p.x-xmin)/(xmax-xmin)*pw,y=pad.t+(max-p.y)/(max-min)*ph;if(!started){ctx.moveTo(x,y);started=true}else ctx.lineTo(x,y)});ctx.stroke();s.data.forEach(p=>{if(!Number.isFinite(p.x)||!Number.isFinite(p.y))return;let x=pad.l+(p.x-xmin)/(xmax-xmin)*pw,y=pad.t+(max-p.y)/(max-min)*ph;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()});ctx.fillText(s.name,pad.l+si*150,pad.t+12)});}
