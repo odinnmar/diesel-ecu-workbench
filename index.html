@@ -146,10 +146,35 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 .estimate-input-hidden{display:none!important}
+
+/* v1.2.24: distinct workspace palettes. Theme is applied to the full active workspace, not only the HP estimator. */
+body.theme-eoi{--accent:#55d6b5;--accent-rgb:85,214,181;--workspace-wash:rgba(20,105,86,.11)}
+body.theme-horsepower{--accent:#ff9b43;--accent-rgb:255,155,67;--workspace-wash:rgba(120,65,22,.15)}
+body.theme-units{--accent:#f2ca70;--accent-rgb:242,202,112;--workspace-wash:rgba(118,89,22,.14)}
+body.theme-math{--accent:#7eb8ff;--accent-rgb:126,184,255;--workspace-wash:rgba(31,78,135,.16)}
+body.theme-mapshot{--accent:#ffad66;--accent-rgb:255,173,102;--workspace-wash:rgba(135,70,24,.15)}
+body.theme-winolsextender{--accent:#b4a0ff;--accent-rgb:180,160,255;--workspace-wash:rgba(75,52,145,.17)}
+body.theme-compare{--accent:#c3a1ff;--accent-rgb:195,161,255;--workspace-wash:rgba(80,45,135,.16)}
+body.theme-logs{--accent:#69d5e7;--accent-rgb:105,213,231;--workspace-wash:rgba(20,100,120,.15)}
+body.theme-project{--accent:#f08fb6;--accent-rgb:240,143,182;--workspace-wash:rgba(120,43,78,.15)}
+body.theme-advanced{--accent:#9ed17d;--accent-rgb:158,209,125;--workspace-wash:rgba(62,104,35,.15)}
+body[class*="theme-"] .workspace-heading{background:linear-gradient(105deg,var(--workspace-wash,rgba(var(--accent-rgb),.10)),rgba(12,19,27,.97) 72%);border-bottom:1px solid rgba(var(--accent-rgb),.32)}
+body[class*="theme-"] .workspace-heading .eyebrow{color:var(--accent)!important}
+body[class*="theme-"] .workspace-heading .live-chip{border-color:rgba(var(--accent-rgb),.4);background:rgba(var(--accent-rgb),.09);color:var(--accent)}
+body[class*="theme-"] .tab.active{background:linear-gradient(100deg,rgba(var(--accent-rgb),.2),rgba(var(--accent-rgb),.07))!important;color:var(--accent)!important;border-color:rgba(var(--accent-rgb),.48)!important;box-shadow:inset 3px 0 var(--accent),0 4px 16px rgba(var(--accent-rgb),.08)!important}
+body[class*="theme-"] .tab.active:before{color:var(--accent)!important;background:rgba(var(--accent-rgb),.15)!important}
+body[class*="theme-"] .card{border-color:rgba(var(--accent-rgb),.23)!important;background:linear-gradient(145deg,rgba(var(--accent-rgb),.045),#101720 72%)!important}
+body[class*="theme-"] .card h2:before{background:var(--accent)!important}
+body[class*="theme-"] input:focus,body[class*="theme-"] select:focus,body[class*="theme-"] textarea:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(var(--accent-rgb),.16)!important}
+body[class*="theme-"] .metric{border-color:rgba(var(--accent-rgb),.24)!important;background:linear-gradient(145deg,rgba(var(--accent-rgb),.08),#0a121d)!important}
+body[class*="theme-"] .metric strong{color:var(--accent)!important}
+body[class*="theme-"] .notice:not(.warn):not(.bad):not(.good){border-left-color:var(--accent)!important}
+body[class*="theme-"] button:not(.secondary):not(.danger):not(.update-button){background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 64%,#16232d),color-mix(in srgb,var(--accent) 34%,#14202a))!important;border-color:color-mix(in srgb,var(--accent) 58%,#263342)!important}
+
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.23</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">vv1.2.24</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <script>
 /* Isolated updater UI: deliberately independent of the workbench calculator script. */
 (() => {
