@@ -145,10 +145,11 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 @media(max-width:600px){header{padding:0 14px;gap:8px}header:after{display:none}.update-controls{gap:6px}.update-controls #updateStatus{display:none}.wrap{padding:12px}.workspace-heading{padding:15px;align-items:flex-start}.live-chip{display:none}.interp-points{grid-template-columns:1fr}.interp-target{grid-column:auto}.card{padding:15px}.fields.three,.fields.four{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+.estimate-input-hidden{display:none!important}
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.20</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.22</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <script>
 /* Isolated updater UI: deliberately independent of the workbench calculator script. */
 (() => {
@@ -256,11 +257,11 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 <div><label>Desired EOI (optional)</label><input id="targetEoi" type="number" placeholder="e.g. 14" step=".1"></div>
 </div>
 <div class="fields three" style="margin-top:10px">
-<div><label>Stock IQ for stock duration/SOI (mg/stroke)</label><input id="oriIq" type="number" placeholder="e.g. 60" step=".1"></div>
-<div><label>Tuned IQ for tuned duration/SOI (mg/stroke)</label><input id="iq" type="number" placeholder="e.g. 85" step=".1"></div>
-<div><label>Stock rail pressure (bar, optional)</label><input id="railStock" type="number" placeholder="Optional"></div>
+<div><label>Stock IQ for stock duration/SOI (mg/stroke)</label><input data-estimate-only="true" id="oriIq" type="number" placeholder="e.g. 60" step=".1"></div>
+<div><label>Tuned IQ for tuned duration/SOI (mg/stroke)</label><input data-estimate-only="true" id="iq" type="number" placeholder="e.g. 85" step=".1"></div>
+<div><label>Stock rail pressure (bar, optional)</label><input data-estimate-only="true" id="railStock" type="number" placeholder="Optional"></div>
 <div><label>Tuned rail pressure requested (bar)</label><input id="railReq" type="number" placeholder="Optional" step="1"></div>
-<div><label>Tuned rail pressure actual (bar)</label><input id="railAct" type="number" placeholder="Optional"></div>
+<div><label>Tuned rail pressure actual (bar)</label><input data-estimate-only="true" id="railAct" type="number" placeholder="Optional"></div>
 </div>
 <div class="actions"><button id="calcEoi">Calculate</button><button class="secondary" id="addEoi">Add point to table</button><button class="secondary" id="clearEoi">Clear table</button></div>
 <div id="eoiResults" class="results"></div>
@@ -575,14 +576,23 @@ function eoiFromSoi(durationDegrees, soiValue, convention){const btdc=soiToBtdc(
 function targetSoiValue(durationDegrees,targetEoi,convention){const btdc=durationDegrees-targetEoi;return convention==="signed"?-btdc:btdc;}
 function estimatedTunedDurationFromIq(){
   const stockDuration = num("oriDur"), stockIq = num("oriIq"), tunedIq = num("iq");
+  const stockRail = num("railStock"), tunedRailActual = num("railAct");
   if (stockDuration == null || stockIq == null || tunedIq == null || stockIq <= 0 || tunedIq < 0) return null;
-  return stockDuration * (tunedIq / stockIq);
+  // IQ scales fuel demand; approximate injector flow correction uses square-root rail pressure ratio.
+  // Only apply the pressure correction when both actual comparison pressures are supplied.
+  let pressureFactor = 1;
+  if (stockRail != null && tunedRailActual != null) {
+    if (stockRail <= 0 || tunedRailActual <= 0) return null;
+    pressureFactor = Math.sqrt(stockRail / tunedRailActual);
+  }
+  return stockDuration * (tunedIq / stockIq) * pressureFactor;
 }
 function effectiveTunedDuration(){
   return $("estimateDurationFromIq").checked ? estimatedTunedDurationFromIq() : num("dur");
 }
 function refreshEoiInputs(){
   const estimating = $("estimateDurationFromIq").checked;
+  document.querySelectorAll("[data-estimate-only=\"true\"]").forEach(input => { const field = input.closest("div"); if (field) field.classList.toggle("estimate-input-hidden", !estimating); });
   const durationInput = $("dur");
   const unit = $("durUnit").value;
   const quantityOnly = unit === "mghub";
@@ -596,8 +606,10 @@ function refreshEoiInputs(){
   $("durationModeNote").innerHTML = quantityOnly
     ? "mg/hub is injected fuel quantity, not injection duration. It cannot be converted to crank degrees or EOI by a unit multiplier. Select µs, ms, or crank degrees for actual duration values. If this Skoda map's cells are mg/hub, use those values as fuel quantity/IQ data only; a valid duration map or ECU-specific conversion is required for EOI."
     : estimating
-      ? "Estimate mode: tuned duration = stock duration × (tuned IQ ÷ stock IQ). This is a rough linear estimate, not injector calibration."
-      : "Normal mode: enter the actual duration value from your map. IQ does not overwrite it.";
+      ? (num("railStock") != null && num("railAct") != null
+        ? "Approximate estimate active: stock duration × (tuned IQ ÷ stock IQ) × √(stock rail ÷ tuned actual rail). Rail pressure correction is applied. This is not a substitute for injector-flow/ECU calibration."
+        : "Approximate estimate: stock duration × (tuned IQ ÷ stock IQ). Enter both stock rail pressure and tuned actual rail pressure to apply the approximate √(stock rail ÷ tuned rail) correction. This is not injector calibration.")
+      : "Manual mode: only the entered tuned duration, RPM and SOI affect EOI. IQ and rail inputs are hidden unless you enable the optional duration estimate.";
   calculateEoi();
 }
 function calculateEoi(){let rpm=num("rpm"),od=num("oriDur"),d=effectiveTunedDuration(),os=num("oriSoi"),ms=num("modSoi"),unit=$("durUnit").value,conv=$("soiConvention").value;if(unit==="mghub"){ $("eoiResults").innerHTML='<div class="notice warn" style="grid-column:1/-1"><b>EOI unavailable for mg/hub values.</b> mg/hub is fuel quantity, not time. No physically valid duration-to-angle conversion can be calculated from it alone. Select µs, ms, or crank degrees and enter real duration data.</div>';drawEoi();return;}let odeg=durationDeg(od,rpm,unit),mdeg=durationDeg(d,rpm,unit);let oe=eoiFromSoi(odeg,os,conv),me=eoiFromSoi(mdeg,ms,conv);let target=num("targetEoi");let required=Number.isFinite(mdeg)&&target!=null?targetSoiValue(mdeg,target,conv):null; $("eoiResults").innerHTML=[metric("Stock duration in crank angle",fmt(odeg),"°"),metric("Tuned duration in crank angle",fmt(mdeg),"°"),metric("Stock EOI",fmt(oe),"° relative to TDC"),metric("Tuned EOI",fmt(me),"° relative to TDC"),metric("EOI change",fmt(me-oe),"° (negative = earlier)"),metric("SOI for target EOI",required==null?"—":fmt(required),conv==="signed"?"signed ° (BTDC negative)":"° BTDC, positive")].join("");let rr=num("railReq"),ra=num("railAct"),br=num("boostReq"),ba=num("boostAct");$("contextResults").innerHTML=[metric("Rail actual − requested",ra==null||rr==null?"—":fmt(ra-rr,0),"bar"),metric("Boost actual − requested",ba==null||br==null?"—":fmt(ba-br,0),"mbar"),metric("MAF actual",num("maf")==null?"—":fmt(num("maf"),1),"mg/stroke")].join("");drawEoi();}
