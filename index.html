@@ -147,7 +147,7 @@ button{border-radius:8px;padding:10px 14px;box-shadow:none;font-size:12px;letter
 
 .estimate-input-hidden{display:none!important}
 
-/* v1.2.24: distinct workspace palettes. Theme is applied to the full active workspace, not only the HP estimator. */
+/* v1.2.26: unique full-workspace themes. Theme is applied to the full active workspace, not only the HP estimator. */
 body.theme-eoi{--accent:#55d6b5;--accent-rgb:85,214,181;--workspace-wash:rgba(20,105,86,.11)}
 body.theme-horsepower{--accent:#ff9b43;--accent-rgb:255,155,67;--workspace-wash:rgba(120,65,22,.15)}
 body.theme-units{--accent:#f2ca70;--accent-rgb:242,202,112;--workspace-wash:rgba(118,89,22,.14)}
@@ -171,10 +171,45 @@ body[class*="theme-"] .metric strong{color:var(--accent)!important}
 body[class*="theme-"] .notice:not(.warn):not(.bad):not(.good){border-left-color:var(--accent)!important}
 body[class*="theme-"] button:not(.secondary):not(.danger):not(.update-button){background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 64%,#16232d),color-mix(in srgb,var(--accent) 34%,#14202a))!important;border-color:color-mix(in srgb,var(--accent) 58%,#263342)!important}
 
+
+/* v1.2.25: visible, per-workspace themes applied by the actual tab handler */
+body.theme-eoi{--accent:#35d6b0;--accent-rgb:53,214,176;--workspace-wash:rgba(16,130,100,.26)}
+body.theme-horsepower{--accent:#ff9b43;--accent-rgb:255,155,67;--workspace-wash:rgba(150,75,18,.30)}
+body.theme-units{--accent:#f2ca70;--accent-rgb:242,202,112;--workspace-wash:rgba(145,105,20,.28)}
+body.theme-math{--accent:#62a9ff;--accent-rgb:98,169,255;--workspace-wash:rgba(30,85,165,.30)}
+body.theme-mapshot{--accent:#ff7f9f;--accent-rgb:255,127,159;--workspace-wash:rgba(145,35,70,.28)}
+body.theme-winolsextender{--accent:#b4a0ff;--accent-rgb:180,160,255;--workspace-wash:rgba(85,55,165,.30)}
+body.theme-compare{--accent:#d39bff;--accent-rgb:211,155,255;--workspace-wash:rgba(105,40,150,.30)}
+body.theme-logs{--accent:#53d8e8;--accent-rgb:83,216,232;--workspace-wash:rgba(15,105,125,.30)}
+body.theme-project{--accent:#ff8fc2;--accent-rgb:255,143,194;--workspace-wash:rgba(145,35,85,.30)}
+body.theme-advanced{--accent:#a9df68;--accent-rgb:169,223,104;--workspace-wash:rgba(70,120,25,.30)}
+body[class*="theme-"] #app,body[class*="theme-"] main,body[class*="theme-"] .main-content,body[class*="theme-"] .workspace{background:linear-gradient(135deg,var(--workspace-wash),rgba(8,13,24,.94) 58%);}
+body[class*="theme-"] .workspace-heading{background:linear-gradient(105deg,var(--workspace-wash),rgba(12,19,27,.90) 76%)!important;border-color:rgba(var(--accent-rgb),.62)!important;box-shadow:inset 4px 0 0 var(--accent),0 8px 28px rgba(var(--accent-rgb),.08)}
+body[class*="theme-"] .card,body[class*="theme-"] .panel,body[class*="theme-"] .tool-card{border-color:rgba(var(--accent-rgb),.30)!important;box-shadow:inset 0 2px 0 rgba(var(--accent-rgb),.36),0 10px 30px rgba(0,0,0,.12)}
+body[class*="theme-"] .tab.active{background:linear-gradient(100deg,rgba(var(--accent-rgb),.25),rgba(var(--accent-rgb),.08))!important;border-color:rgba(var(--accent-rgb),.85)!important;color:var(--accent)!important;box-shadow:inset 0 -3px 0 var(--accent),0 0 18px rgba(var(--accent-rgb),.13)!important}
+body[class*="theme-"] button.primary,body[class*="theme-"] .btn-primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff))!important;border-color:var(--accent)!important;color:#09131a!important}
+body[class*="theme-"] input:focus,body[class*="theme-"] select:focus,body[class*="theme-"] textarea:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(var(--accent-rgb),.20)!important}
+
+/* v1.2.26: each tab owns a genuinely different full-window workspace treatment. */
+body.theme-eoi{--accent:#55d6b5;--accent-rgb:85,214,181;--workspace-wash:rgba(20,105,86,.24);background:radial-gradient(ellipse at 12% 0%,rgba(20,125,100,.32),transparent 42%),linear-gradient(145deg,#071713,#0b171b 58%,#0a111b)!important}
+body.theme-horsepower{--accent:#ff9b43;--accent-rgb:255,155,67;--workspace-wash:rgba(150,75,18,.25);background:radial-gradient(ellipse at 12% 0%,rgba(180,82,18,.34),transparent 42%),linear-gradient(145deg,#1b1009,#19120f 58%,#0d1118)!important}
+body.theme-units{--accent:#f2ca70;--accent-rgb:242,202,112;--workspace-wash:rgba(145,105,20,.25);background:radial-gradient(ellipse at 12% 0%,rgba(155,117,23,.30),transparent 42%),linear-gradient(145deg,#191609,#17150e 58%,#0d1118)!important}
+body.theme-math{--accent:#62a9ff;--accent-rgb:98,169,255;--workspace-wash:rgba(30,85,165,.28);background:radial-gradient(ellipse at 12% 0%,rgba(35,95,180,.34),transparent 42%),linear-gradient(145deg,#081326,#0b1423 58%,#0a111b)!important}
+body.theme-mapshot{--accent:#ff7f9f;--accent-rgb:255,127,159;--workspace-wash:rgba(145,35,70,.26);background:radial-gradient(ellipse at 12% 0%,rgba(160,35,75,.33),transparent 42%),linear-gradient(145deg,#1a0b14,#190f18 58%,#0d1118)!important}
+body.theme-winolsextender{--accent:#b4a0ff;--accent-rgb:180,160,255;--workspace-wash:rgba(85,55,165,.28);background:radial-gradient(ellipse at 12% 0%,rgba(95,55,175,.35),transparent 42%),linear-gradient(145deg,#120d22,#141122 58%,#0a111b)!important}
+body.theme-compare{--accent:#d39bff;--accent-rgb:211,155,255;--workspace-wash:rgba(105,40,150,.28);background:radial-gradient(ellipse at 12% 0%,rgba(110,35,165,.34),transparent 42%),linear-gradient(145deg,#180c20,#171020 58%,#0d1118)!important}
+body.theme-logs{--accent:#53d8e8;--accent-rgb:83,216,232;--workspace-wash:rgba(15,105,125,.28);background:radial-gradient(ellipse at 12% 0%,rgba(15,115,140,.33),transparent 42%),linear-gradient(145deg,#07171d,#0b171e 58%,#0a111b)!important}
+body.theme-project{--accent:#ff8fc2;--accent-rgb:255,143,194;--workspace-wash:rgba(145,35,85,.28);background:radial-gradient(ellipse at 12% 0%,rgba(155,35,95,.33),transparent 42%),linear-gradient(145deg,#1a0b16,#190f19 58%,#0d1118)!important}
+body.theme-advanced{--accent:#a9df68;--accent-rgb:169,223,104;--workspace-wash:rgba(70,120,25,.28);background:radial-gradient(ellipse at 12% 0%,rgba(75,125,25,.32),transparent 42%),linear-gradient(145deg,#101a09,#11180e 58%,#0a111b)!important}
+body[class*="theme-"] .wrap{background:linear-gradient(125deg,var(--workspace-wash),rgba(8,13,24,.12) 58%,transparent);border-radius:18px;transition:background .2s ease}
+body[class*="theme-"] .workspace-heading{background:linear-gradient(105deg,var(--workspace-wash),rgba(12,19,27,.88) 78%)!important;border-color:rgba(var(--accent-rgb),.7)!important;box-shadow:inset 5px 0 0 var(--accent),0 8px 28px rgba(var(--accent-rgb),.09)!important}
+body[class*="theme-"] section.active{background:linear-gradient(135deg,var(--workspace-wash),rgba(8,13,24,.08) 70%);border-radius:14px;padding:12px; margin:0 -12px}
+body[class*="theme-"] .tab.active{background:linear-gradient(100deg,rgba(var(--accent-rgb),.27),rgba(var(--accent-rgb),.08))!important;border-color:rgba(var(--accent-rgb),.9)!important;color:var(--accent)!important;box-shadow:inset 0 -3px 0 var(--accent),0 0 18px rgba(var(--accent-rgb),.15)!important}
+body[class*="theme-"] input:focus,body[class*="theme-"] select:focus,body[class*="theme-"] textarea:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2)!important}
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">vv1.2.24</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.26</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <script>
 /* Isolated updater UI: deliberately independent of the workbench calculator script. */
 (() => {
@@ -594,7 +629,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const metric=(label,value,unit="")=>`<div class="metric"><small>${label}</small><strong>${value}</strong><em>${unit}</em></div>`;
 const round=(v,d)=>Number.isFinite(v)?Number(v.toFixed(d)):v;
 let eoiRows=[],logRows=[],lastExtrap="",lastTrend="",lastDiff="";
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));const group=b.closest(".nav-group");if(group)group.open=true;if(b.dataset.tab==="eoi")drawEoi();if(b.dataset.tab==="logs")drawLogs();}));
+const applyWorkbenchTheme=(tab)=>{const themes={eoi:"theme-eoi",horsepower:"theme-horsepower",units:"theme-units",math:"theme-math",mapshot:"theme-mapshot",winolsextender:"theme-winolsextender",compare:"theme-compare",logs:"theme-logs",project:"theme-project",advanced:"theme-advanced"};document.body.classList.remove(...Object.values(themes));document.body.classList.add(themes[tab]||"theme-eoi");document.documentElement.dataset.activeWorkbenchTab=tab||"eoi";};document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.tab));applyWorkbenchTheme(b.dataset.tab);const group=b.closest(".nav-group");if(group)group.open=true;if(b.dataset.tab==="eoi")drawEoi();if(b.dataset.tab==="logs")drawLogs();}));applyWorkbenchTheme(document.querySelector(".tab.active")?.dataset.tab||"eoi");
 function durationDeg(d,rpm,unit){if(d==null||rpm==null||!Number.isFinite(d)||!Number.isFinite(rpm)||rpm<=0)return NaN;if(unit==="deg")return d;if(unit==="ms")return d*rpm*6/1000;return d*rpm*6/1000000;}
 function soiToBtdc(v, convention){if(v==null)return NaN;return convention==="signed"?-v:v;}
 function eoiFromSoi(durationDegrees, soiValue, convention){const btdc=soiToBtdc(soiValue,convention);return durationDegrees-btdc;}
