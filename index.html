@@ -209,7 +209,7 @@ body[class*="theme-"] input:focus,body[class*="theme-"] select:focus,body[class*
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.26</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.27</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <script>
 /* Isolated updater UI: deliberately independent of the workbench calculator script. */
 (() => {
@@ -986,6 +986,55 @@ mapShotBuildGrid();
 })();
 
 refreshEoiInputs();
+</script>
+<script>
+// Accept either comma or dot as the decimal separator in numeric fields.
+(function enableCommaDecimalInput(){
+  function prepare(root){
+    const fields=[];
+    if(root && root.matches && root.matches('input[type="number"]')) fields.push(root);
+    if(root && root.querySelectorAll) fields.push(...root.querySelectorAll('input[type="number"]'));
+    fields.forEach(input=>{
+      if(input.dataset.commaDecimalReady) return;
+      input.dataset.commaDecimalReady='1';
+      // Text inputs allow the comma key on all keyboard layouts; keep a decimal keypad hint.
+      input.type='text';
+      input.inputMode='decimal';
+      input.autocomplete='off';
+      input.addEventListener('input',()=>{
+        if(!input.value.includes(',')) return;
+        const start=input.selectionStart, end=input.selectionEnd;
+        const before=input.value;
+        let seenDecimal=false;
+        let decimalSeen=false;
+        const normalized=before.replace(/,/g,'.').replace(/\./g,dot=>{if(decimalSeen)return '';decimalSeen=true;return dot});
+        if(normalized!==before){
+          input.value=normalized;
+          if(start!==null && end!==null){
+            const normalizePart=part=>{let seen=false;return part.replace(/,/g,'.').replace(/\./g,dot=>{if(seen)return '';seen=true;return dot})};
+            const shift=normalizePart(before.slice(0,start)).length;
+            const shiftEnd=normalizePart(before.slice(0,end)).length;
+            try{input.setSelectionRange(shift,shiftEnd)}catch(e){}
+          }
+        }
+      });
+      input.addEventListener('paste',event=>{
+        const pasted=(event.clipboardData||window.clipboardData)?.getData('text');
+        if(!pasted || !pasted.includes(',')) return;
+        event.preventDefault();
+        const start=input.selectionStart ?? input.value.length;
+        const end=input.selectionEnd ?? input.value.length;
+        let decimalSeen=false;
+        const replacement=pasted.replace(/,/g,'.').replace(/\./g,dot=>{if(decimalSeen)return '';decimalSeen=true;return dot});
+        input.setRangeText(replacement,start,end,'end');
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+      });
+    });
+  }
+  prepare(document);
+  new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1)prepare(node)})))
+    .observe(document.documentElement,{childList:true,subtree:true});
+})();
 </script>
 </body>
 </html>

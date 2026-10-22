@@ -84,4 +84,53 @@ $('reset').addEventListener('click',()=>{const v={fuelBasis:'iq',stockDuration:9
 $('copy').addEventListener('click',async()=>{const s=`Diesel HP Estimator V5 Premium report\nEngine/hardware: ${$('engine').value||'Not specified'}\nFactory rated power: ${$('factoryHp').value} mechanical HP\nStock/tuned IQ: ${$('stockIq').value}/${$('tunedIq').value} mg/stroke (${ $('iqSource').value})\nIQ ratio: ${$('iqRatio').textContent}\nUncalibrated proportional-fuel reference: ${$('factoryHp').value&&$('iqRatio').textContent!=='—'?f(val('factoryHp')*val('tunedIq')/val('stockIq'))+' HP':'Not available'}\nDisplayed scenario: ${$('mainHp').innerText}\nFuel basis: ${$('fuelBasis').value}; duration stock/tuned: ${$('stockDuration').value}/${$('tunedDuration').value} µs; rail stock/tuned: ${$('stockRail').value}/${$('tunedRail').value} bar
 Crank power: ${$('crankKw').textContent}; wheel power: ${$('wheelKw').textContent}
 Sensitivity band: ${$('lowHp').textContent}–${$('highHp').textContent} (not statistical)\nDrivetrain: ${$('drivetrain').value}; assumed loss: ${$('loss').value}%\nEstimated wheel HP after loss: ${$('wheelHp').textContent}\nBoost request stock/tuned: ${$('stockBoost').value}/${$('tunedBoost').value} mbar absolute\nActual boost: ${$('actualBoost').value||'Not entered'} mbar absolute\nAir mass stock/tuned: ${$('stockAir').value}/${$('tunedAir').value} ${$('airUnit').value} (${ $('airSource').value})\nTorque check: ${$('torquePower').textContent} at ${$('torqueRpm').value} RPM\nDyno calibration: ${$('calDyno').value||'None'} HP; notes: ${$('calNotes').value||'None'}\nIMPORTANT: Map-based output is not a dyno prediction. Validate on logs and dyno.`;try{await navigator.clipboard.writeText(s);$('copy').textContent='Copied';setTimeout(()=>$('copy').textContent='Copy report',1600)}catch(e){window.prompt('Copy report',s)}});update();
-</script></body></html>
+</script><script>
+// Accept either comma or dot as the decimal separator in numeric fields.
+(function enableCommaDecimalInput(){
+  function prepare(root){
+    const fields=[];
+    if(root && root.matches && root.matches('input[type="number"]')) fields.push(root);
+    if(root && root.querySelectorAll) fields.push(...root.querySelectorAll('input[type="number"]'));
+    fields.forEach(input=>{
+      if(input.dataset.commaDecimalReady) return;
+      input.dataset.commaDecimalReady='1';
+      // Text inputs allow the comma key on all keyboard layouts; keep a decimal keypad hint.
+      input.type='text';
+      input.inputMode='decimal';
+      input.autocomplete='off';
+      input.addEventListener('input',()=>{
+        if(!input.value.includes(',')) return;
+        const start=input.selectionStart, end=input.selectionEnd;
+        const before=input.value;
+        let seenDecimal=false;
+        let decimalSeen=false;
+        const normalized=before.replace(/,/g,'.').replace(/\./g,dot=>{if(decimalSeen)return '';decimalSeen=true;return dot});
+        if(normalized!==before){
+          input.value=normalized;
+          if(start!==null && end!==null){
+            const normalizePart=part=>{let seen=false;return part.replace(/,/g,'.').replace(/\./g,dot=>{if(seen)return '';seen=true;return dot})};
+            const shift=normalizePart(before.slice(0,start)).length;
+            const shiftEnd=normalizePart(before.slice(0,end)).length;
+            try{input.setSelectionRange(shift,shiftEnd)}catch(e){}
+          }
+        }
+      });
+      input.addEventListener('paste',event=>{
+        const pasted=(event.clipboardData||window.clipboardData)?.getData('text');
+        if(!pasted || !pasted.includes(',')) return;
+        event.preventDefault();
+        const start=input.selectionStart ?? input.value.length;
+        const end=input.selectionEnd ?? input.value.length;
+        let decimalSeen=false;
+        const replacement=pasted.replace(/,/g,'.').replace(/\./g,dot=>{if(decimalSeen)return '';decimalSeen=true;return dot});
+        input.setRangeText(replacement,start,end,'end');
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+      });
+    });
+  }
+  prepare(document);
+  new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1)prepare(node)})))
+    .observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+</body></html>

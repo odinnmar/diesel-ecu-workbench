@@ -31,4 +31,53 @@ $('copyRows').onclick=()=>{const a=Number($('rowStart').value),b=Number($('rowEn
 $('clearMap').onclick=()=>{makeRows(Number($('rowCount').value),Number($('sourceCount').value));renderSource();status('sourceStatus','Map cleared. Paste a WinOLS block into the first cell or enter values manually.');};
 $('loadExample').onclick=()=>{pressures=[800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100];const vals=[[5000,5000,5000,5000,5000,5000],[3302,4068,4950,5000,5000,5000],[2500,3043,3590,4130,4670,5000],[2142,2658,3133,3608,4083,4558],[1817,2210,2610,3010,3410,3810],[1530,1939,2359,2779,3199,3619],[1363,1778,2109,2440,2771,3102],[1262,1565,1880,2195,2510,2825],[1169,1443,1738,2033,2328,2623],[1080,1361,1619,1877,2135,2393],[983,1290,1544,1772,1968,2205],[902,1221,1471,1671,1831,2031],[827,1120,1364,1559,1715,1910],[769,1038,1267,1450,1596,1779]];$('sourceCount').value='6';$('rowCount').value='14';sourceIQ=[50,60,70,80,90,100];targets=[110,120,130];rows=vals.map(r=>r.map(String));renderSource();status('sourceStatus','Loaded 14-row example based on your screenshot values.','good');};
 makeRows(15,6);renderSource();
-</script></body></html>
+</script><script>
+// Accept either comma or dot as the decimal separator in numeric fields.
+(function enableCommaDecimalInput(){
+  function prepare(root){
+    const fields=[];
+    if(root && root.matches && root.matches('input[type="number"]')) fields.push(root);
+    if(root && root.querySelectorAll) fields.push(...root.querySelectorAll('input[type="number"]'));
+    fields.forEach(input=>{
+      if(input.dataset.commaDecimalReady) return;
+      input.dataset.commaDecimalReady='1';
+      // Text inputs allow the comma key on all keyboard layouts; keep a decimal keypad hint.
+      input.type='text';
+      input.inputMode='decimal';
+      input.autocomplete='off';
+      input.addEventListener('input',()=>{
+        if(!input.value.includes(',')) return;
+        const start=input.selectionStart, end=input.selectionEnd;
+        const before=input.value;
+        let seenDecimal=false;
+        let decimalSeen=false;
+        const normalized=before.replace(/,/g,'.').replace(/\./g,dot=>{if(decimalSeen)return '';decimalSeen=true;return dot});
+        if(normalized!==before){
+          input.value=normalized;
+          if(start!==null && end!==null){
+            const normalizePart=part=>{let seen=false;return part.replace(/,/g,'.').replace(/\./g,dot=>{if(seen)return '';seen=true;return dot})};
+            const shift=normalizePart(before.slice(0,start)).length;
+            const shiftEnd=normalizePart(before.slice(0,end)).length;
+            try{input.setSelectionRange(shift,shiftEnd)}catch(e){}
+          }
+        }
+      });
+      input.addEventListener('paste',event=>{
+        const pasted=(event.clipboardData||window.clipboardData)?.getData('text');
+        if(!pasted || !pasted.includes(',')) return;
+        event.preventDefault();
+        const start=input.selectionStart ?? input.value.length;
+        const end=input.selectionEnd ?? input.value.length;
+        let decimalSeen=false;
+        const replacement=pasted.replace(/,/g,'.').replace(/\./g,dot=>{if(decimalSeen)return '';decimalSeen=true;return dot});
+        input.setRangeText(replacement,start,end,'end');
+        input.dispatchEvent(new Event('input',{bubbles:true}));
+      });
+    });
+  }
+  prepare(document);
+  new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1)prepare(node)})))
+    .observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+</body></html>
