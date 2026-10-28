@@ -1,6 +1,6 @@
 {
   "name": "diesel-ecu-workbench",
-  "version": "1.2.27",
+  "version": "1.2.28",
   "description": "Offline diesel ECU calibration workspace with HP estimator and automatic updates",
   "main": "main.js",
   "author": "Diesel ECU Workbench",

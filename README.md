@@ -1,3 +1,11 @@
+# v1.2.28 — Visible diagnostics and map-grid reliability
+
+- Adds an in-app Diagnostics panel that records uncaught JavaScript errors, unhandled promise rejections, structural self-check failures, and actions that show no visible response.
+- Adds Run checks, Export log, and Copy log controls for easier troubleshooting.
+- The screenshot map extender now validates row/column counts instead of silently forcing invalid inputs to minimum values, reports failed grid construction, checks the number of rendered cells, and validates extended output before displaying it.
+- Copy/export attempts with no generated map now report the missing prerequisite in the map status.
+- Preserves the v1.2.27 comma/dot input support and the distinct full-workspace tab themes.
+
 # Diesel ECU Workbench
 
 Offline-first Windows desktop workbench for diesel ECU calibration calculations, with an integrated Diesel HP Estimator and optional automatic updates.

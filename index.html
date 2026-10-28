@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diesel ECU Workbench</title>
+<script>
+/* Early error buffer: catches errors that happen before the diagnostics UI is initialized. */
+window.__workbenchEarlyErrors = [];
+window.addEventListener('error', function(event) {
+  window.__workbenchEarlyErrors.push({kind:'error',message:event.message||'Unknown early JavaScript error',file:event.filename||'',line:event.lineno||0,column:event.colno||0,time:new Date().toISOString()});
+});
+window.addEventListener('unhandledrejection', function(event) {
+  const reason=event.reason;
+  window.__workbenchEarlyErrors.push({kind:'rejection',message:reason?.message||String(reason),stack:reason?.stack||'',time:new Date().toISOString()});
+});
+</script>
 <style>
 :root{--bg:#080d18;--panel:#101a2b;--panel2:#17243a;--line:#2a3b56;--text:#f0f5ff;--muted:#9eafc9;--accent:#73c7ff;--good:#63d9ad;--warn:#ffca78;--bad:#ff858e;--radius:16px}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 12% -10%,#183353 0,transparent 34%),radial-gradient(ellipse at 100% 0%,#152942 0,transparent 30%),linear-gradient(145deg,#080d18,#0b1322 60%,#0b1726);color:var(--text);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;letter-spacing:.05px}
@@ -206,10 +217,29 @@ body[class*="theme-"] .workspace-heading{background:linear-gradient(105deg,var(-
 body[class*="theme-"] section.active{background:linear-gradient(135deg,var(--workspace-wash),rgba(8,13,24,.08) 70%);border-radius:14px;padding:12px; margin:0 -12px}
 body[class*="theme-"] .tab.active{background:linear-gradient(100deg,rgba(var(--accent-rgb),.27),rgba(var(--accent-rgb),.08))!important;border-color:rgba(var(--accent-rgb),.9)!important;color:var(--accent)!important;box-shadow:inset 0 -3px 0 var(--accent),0 0 18px rgba(var(--accent-rgb),.15)!important}
 body[class*="theme-"] input:focus,body[class*="theme-"] select:focus,body[class*="theme-"] textarea:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2)!important}
+
+/* v1.2.28: visible runtime diagnostics and action feedback */
+#diagnosticsWidget{position:fixed;right:14px;bottom:14px;z-index:9999;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;letter-spacing:0}
+#diagnosticsToggle{display:flex;align-items:center;gap:8px;border:1px solid #52677d;border-radius:10px;background:#101b2b;color:#e9f2ff;padding:9px 12px;box-shadow:0 8px 24px #0008;font-size:12px;font-weight:700;cursor:pointer}
+#diagnosticsBadge{display:inline-flex;min-width:25px;justify-content:center;border-radius:999px;background:#173f32;color:#a7f0d0;padding:2px 6px;font-size:10px}
+#diagnosticsBadge.has-issues{background:#4b2b22;color:#ffd2a8}
+#diagnosticsPanel{display:none;position:absolute;right:0;bottom:48px;width:min(520px,calc(100vw - 28px));max-height:min(68vh,620px);background:#0c1422;border:1px solid #435671;border-radius:14px;box-shadow:0 20px 70px #000b;overflow:hidden;color:#e8efff}
+#diagnosticsPanel.open{display:flex;flex-direction:column}
+.diag-head{padding:12px 14px;background:#142137;border-bottom:1px solid #31445f;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.diag-head strong{font-size:13px}.diag-subtitle{font-size:10px;color:#a9bad0;margin-top:2px}
+.diag-controls{display:flex;gap:5px;flex-wrap:wrap;padding:9px 12px;border-bottom:1px solid #24344b}
+.diag-controls button{width:auto;min-width:0;padding:6px 8px;font-size:10px;border-radius:7px;background:#1b2a40;border:1px solid #435875;color:#e7efff;cursor:pointer}
+#diagnosticsList{overflow:auto;padding:8px 10px;min-height:100px;flex:1}
+.diag-entry{padding:8px 9px;border:1px solid #25364d;border-left:3px solid #6a8fb8;border-radius:7px;margin-bottom:7px;background:#101a2b;overflow-wrap:anywhere}
+.diag-entry.error{border-left-color:#ff7882;background:#28191f}.diag-entry.warn{border-left-color:#efb45f;background:#272116}.diag-entry.success{border-left-color:#56d9a7}.diag-entry.info{border-left-color:#6a8fb8}
+.diag-meta{display:flex;gap:7px;align-items:center;color:#a8b9d0;font-size:9px;margin-bottom:3px}.diag-level{font-weight:800;text-transform:uppercase;letter-spacing:.5px}.diag-message{font-size:11px;line-height:1.45;white-space:pre-wrap}
+.diag-empty{font-size:11px;color:#a8b9d0;padding:16px;text-align:center}
+@media(max-width:520px){#diagnosticsWidget{right:8px;bottom:8px}#diagnosticsPanel{width:calc(100vw - 16px);max-height:70vh}}
+
 </style>
 </head>
 <body>
-<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.27</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
+<header><h1>Diesel ECU Workbench <span class="pill">ENGINEERING SUITE / OFFLINE</span></h1><p>Local calibration workspace</p><div class="update-controls"><span id="appVersion">v1.2.28</span><span id="updateStatus" role="status" aria-live="polite">Updater ready</span><button id="checkUpdates" type="button" class="update-button">Check for updates</button></div></header>
 <script>
 /* Isolated updater UI: deliberately independent of the workbench calculator script. */
 (() => {
@@ -722,7 +752,7 @@ $("loadProjectBtn").onclick=()=>$("loadProjectFile").click();
 $("loadProjectFile").onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let data=JSON.parse(await file.text());let p=data.project||{};for(let [k,id] of [["vehicle","vehicle"],["ecu","ecu"],["hardware","hardware"],["revision","revision"],["notes","projectNotes"]])$(id).value=p[k]||"";for(let [id,v] of Object.entries(data.inputs||{}))if($(id))$(id).value=v;eoiRows=Array.isArray(data.eoiRows)?data.eoiRows:[];logRows=Array.isArray(data.logRows)?data.logRows:[];reportRows=Array.isArray(data.reportRows)?data.reportRows:[];renderReport();renderEoiTable();renderLogs();refreshEoiInputs();drawLogs();$("sessionStatus").textContent="Session loaded."; }catch(err){alert("Could not load session JSON: "+err.message)}e.target.value=""};
 $("exportAllCsv").onclick=()=>$("exportEoi").click();
 $("resetAll").onclick=()=>{if(!confirm("Clear EOI points, logs and calculator inputs?"))return;eoiRows=[];logRows=[];renderEoiTable();renderLogs();["rpm","oriDur","dur","oriSoi","modSoi","targetEoi","oriIq","iq","railStock","railReq","railAct","boostReq","boostAct","maf","pointNote"].forEach(id=>$(id).value="");$("estimateDurationFromIq").checked=false;$("eoiResults").innerHTML="";$("contextResults").innerHTML="";$("logSummary").innerHTML="";$("logFlags").innerHTML="";drawEoi();drawLogs();refreshEoiInputs();$("sessionStatus").textContent="Calculations reset."};
-refreshEoiInputs();calculateEoi();$("runExtrap").click();$("runInterp").click();$("runTrend").click();drawLogs();
+refreshEoiInputs();calculateEoi();$("runExtrap").click();calculateInterpolation();$("runTrend").click();drawLogs();
 
 // Extra tuning helpers
 let reportRows=[];
@@ -800,15 +830,46 @@ function mapShotGetAxis(n){
  for(let i=1;i<axis.length;i++)if(axis[i]<=axis[i-1])return null;
  return axis;
 }
+function mapShotStatus(message,kind='info'){
+ const el=$("mapShotStatus");
+ if(el){el.textContent=message;el.classList.remove('bad','good','warn');if(kind==='error')el.classList.add('bad');else if(kind==='success')el.classList.add('good');else if(kind==='warn')el.classList.add('warn');}
+ const d=window.WorkbenchDiagnostics;
+ if(d){if(kind==='error')d.error(message,{area:'Screenshot map extender'});else if(kind==='warn')d.warn(message,{area:'Screenshot map extender'});else if(kind==='success')d.success(message,{area:'Screenshot map extender'});else d.info(message,{area:'Screenshot map extender'});}
+}
+function mapShotReadCount(id,label,min,max){
+ const raw=String($(id)?.value??'').trim().replace(/,/g,'.');
+ const n=Number(raw);
+ if(!raw||!Number.isFinite(n)||!Number.isInteger(n)||n<min||n>max)throw new Error(`${label} must be a whole number from ${min} to ${max}. Current value: ${raw||'(blank)'}.`);
+ return n;
+}
 function mapShotBuildGrid(values=null){
- const nr=Math.max(1,Math.min(80,Math.floor(Number($("mapShotRows").value)||1)));
- const nc=Math.max(2,Math.min(40,Math.floor(Number($("mapShotCols").value)||2)));
- $("mapShotRows").value=nr;$("mapShotCols").value=nc;
- const currentAxis=mapShotGetAxis(nc);
- if(!currentAxis){const step=Math.max(.001,Number($("mapShotAxisStep").value)||10);$("mapShotAxis").value=Array.from({length:nc},(_,i)=>Number((i*step).toFixed(6))).join(', ')}
- mapShotRowsData=Array.from({length:nr},(_,r)=>Array.from({length:nc},(_,c)=>values?.[r]?.[c]??""));mapShotOutput=[];mapShotOutputAxis=[];
- renderMapShotInput();$("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">Press Extend all rows to generate the preview.</p>';
- $("mapShotStatus").textContent=`Ready for ${nr} map rows. Enter/check the mm³/stroke axis points before extending.`;
+ try{
+  const nr=mapShotReadCount('mapShotRows','Map rows',1,80);
+  const nc=mapShotReadCount('mapShotCols','Existing map columns',2,40);
+  if(values!==null){
+   if(!Array.isArray(values)||values.length!==nr)throw new Error(`Cannot build grid: the supplied data has ${Array.isArray(values)?values.length:'an invalid number of'} rows, but the controls request ${nr}.`);
+   const badRow=values.findIndex(row=>!Array.isArray(row)||row.length!==nc);
+   if(badRow>=0)throw new Error(`Cannot build grid: row ${badRow+1} has the wrong number of cells. Expected ${nc} columns.`);
+  }
+  $("mapShotRows").value=nr;$("mapShotCols").value=nc;
+  const currentAxis=mapShotGetAxis(nc);
+  mapShotRowsData=Array.from({length:nr},(_,r)=>Array.from({length:nc},(_,c)=>values?.[r]?.[c]??""));
+  mapShotOutput=[];mapShotOutputAxis=[];
+  renderMapShotInput();
+  $("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">Press Extend all rows to generate the preview.</p>';
+  const actualCells=$("mapShotGridWrap").querySelectorAll('[data-ms-r]').length;
+  if(actualCells!==nr*nc)throw new Error(`Grid render incomplete: expected ${nr*nc} cells, but only ${actualCells} appeared in the page.`);
+  if(!currentAxis){
+   mapShotStatus(`Grid built: ${nr} rows × ${nc} columns (${actualCells} cells). The axis list is invalid or has the wrong number of values; correct it before extending.`, 'warn');
+  }else{
+   mapShotStatus(`Grid built successfully: ${nr} rows × ${nc} columns (${actualCells} cells). Enter/check every source value, then extend.`, 'success');
+  }
+  return true;
+ }catch(error){
+  const message=`Grid build failed: ${error?.message||String(error)}`;
+  mapShotStatus(message,'error');
+  return false;
+ }
 }
 function renderMapShotInput(){
  const nc=mapShotRowsData[0]?.length||2,axis=mapShotGetAxis(nc);
@@ -819,38 +880,61 @@ function renderMapShotInput(){
 }
 function readMapShotInputs(){const rows=mapShotRowsData.map(r=>r.slice());$("mapShotGridWrap").querySelectorAll('[data-ms-r]').forEach(inp=>{rows[+inp.dataset.msR][+inp.dataset.msC]=inp.value===''?'':Number(inp.value)});return rows;}
 $("mapShotBuild").onclick=()=>mapShotBuildGrid();
-$("mapShotFillExample").onclick=()=>{$("mapShotRows").value=4;$("mapShotCols").value=5;$("mapShotAxis").value='0, 10, 20, 30, 40';$("mapShotAxisStep").value=10;mapShotBuildGrid([[40,39,38,37,36],[55,54,52,50,48],[68,67,65,62,59],[72,71,69,66,62]]);$("mapShotStatus").textContent='Example loaded. Axis values are examples only; replace them with your real StageX mm³/stroke axis before using real map data.';};
-$("mapShotClear").onclick=()=>mapShotBuildGrid();
-$("mapShotAxis").addEventListener('change',()=>{renderMapShotInput();mapShotOutput=[];mapShotOutputAxis=[];$("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">Axis changed. Press Extend all rows to regenerate the preview.</p>';});
-$("mapShotCols").addEventListener('change',()=>{const n=Math.max(2,Math.min(40,Math.floor(Number($("mapShotCols").value)||2)));const step=Math.max(.001,Number($("mapShotAxisStep").value)||10);$("mapShotAxis").value=Array.from({length:n},(_,i)=>Number((i*step).toFixed(6))).join(', ');});
+$("mapShotFillExample").onclick=()=>{$("mapShotRows").value=4;$("mapShotCols").value=5;$("mapShotAxis").value='0, 10, 20, 30, 40';$("mapShotAxisStep").value=10;if(mapShotBuildGrid([[40,39,38,37,36],[55,54,52,50,48],[68,67,65,62,59],[72,71,69,66,62]]))mapShotStatus('Example loaded. These axis/cell values are only examples; replace them with your real StageX values before using map data.','warn');};
+$("mapShotClear").onclick=()=>{if(mapShotBuildGrid())mapShotStatus('Source grid cleared. Row and column counts were kept; the source cells are blank.','success')};
+$("mapShotAxis").addEventListener('change',()=>{try{renderMapShotInput();mapShotOutput=[];mapShotOutputAxis=[];$("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">Axis changed. Press Extend all rows to regenerate the preview.</p>';const axis=mapShotGetAxis(mapShotRowsData[0]?.length||2);if(axis)mapShotStatus('Axis updated and validated. Press Extend all rows to regenerate the preview.','success');else mapShotStatus('Axis list does not match the column count or is not strictly increasing. The grid is still editable, but extension will be blocked until the axis is fixed.','warn');}catch(error){mapShotStatus(`Axis update failed: ${error?.message||error}`,'error');}});
+$("mapShotCols").addEventListener('change',()=>{try{const n=mapShotReadCount('mapShotCols','Existing map columns',2,40);const step=Number(String($("mapShotAxisStep").value).trim().replace(/,/g,'.'));if(!Number.isFinite(step)||step<=0)throw new Error('Next axis step must be a positive number before columns can be changed.');$("mapShotAxis").value=Array.from({length:n},(_,i)=>Number((i*step).toFixed(6))).join(', ');mapShotStatus(`Column count set to ${n}; a placeholder axis was generated. Check it against the real StageX axis, then build the grid.`,'warn')}catch(error){mapShotStatus(`Column count not accepted: ${error?.message||error}`,'error')}});
 $("mapShotFile").addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(mapShotObjectUrl)URL.revokeObjectURL(mapShotObjectUrl);mapShotObjectUrl=URL.createObjectURL(f);const img=$("mapShotImage");img.src=mapShotObjectUrl;img.classList.remove('hide');img.style.display='block';img.style.width='100%';img.style.maxWidth='100%';img.style.transform='none';img.style.maxHeight='75vh';mapShotZoom=1;$("mapShotImageEmpty").classList.add('hide');$("mapShotStatus").textContent=`Loaded screenshot: ${f.name}. Read the axis values from the image and enter them above.`;});
 function applyMapShotZoom(){const img=$("mapShotImage");img.style.width=(mapShotZoom*100)+'%';img.style.maxWidth='none';img.style.maxHeight='none';img.style.height='auto';}
 $("mapShotZoomIn").onclick=()=>{mapShotZoom=Math.min(3,mapShotZoom+.25);applyMapShotZoom()};$("mapShotZoomOut").onclick=()=>{mapShotZoom=Math.max(.5,mapShotZoom-.25);applyMapShotZoom()};$("mapShotFit").onclick=()=>{mapShotZoom=1;const img=$("mapShotImage");img.style.width='100%';img.style.maxWidth='100%';img.style.maxHeight='75vh';img.style.height='auto'};
 $("mapShotExtend").onclick=()=>{
- const src=readMapShotInputs(),add=Math.max(1,Math.min(20,Math.floor(Number($("mapShotAddCols").value)||1))),dec=Number($("mapShotDecimals").value),method=$("mapShotMethod").value;
- if(!src.length||src.some(r=>r.length<2||r.some(v=>v===''||!Number.isFinite(Number(v))))){$("mapShotStatus").textContent='Every source cell must contain a valid number. Fill all rows and try again.';return}
- const axis=mapShotGetAxis(src[0].length),step=Number($("mapShotAxisStep").value);
- if(!axis){$("mapShotStatus").textContent='Axis invalid: enter one strictly increasing numeric mm³/stroke value for every existing map column.';return}
- if(!Number.isFinite(step)||step<=0){$("mapShotStatus").textContent='Enter a positive next-axis step in mm³/stroke.';return}
- const suspiciousCells=src.flat().filter(v=>Math.abs(Number(v))>=100000);
- if(suspiciousCells.length && !confirm(`Warning: ${suspiciousCells.length} source cell(s) are 100,000 or larger. This may indicate a missed decimal point. This build restores decimals by discarding the final two digits from integer-only OCR readings, assuming the screenshot values end in .00. Continue anyway?`)){ $('mapShotStatus').textContent='Stopped: check unusually large source values and correct OCR errors before extending.'; return; }
- mapShotRowsData=src;mapShotOutputAxis=[...axis,...Array.from({length:add},(_,i)=>axis[axis.length-1]+step*(i+1))];
- const pressureSchedule=$("mapShotPressureSchedule").value;
- mapShotOutput=src.map((row,rowIndex)=>{const vals=row.map(Number),n=vals.length;let slope,intercept;
-  const rowPressure=rowIndex*100;
-  const rowMultiplier=pressureSchedule==='on'?(rowPressure<=1000?1:(rowPressure===1100?.9:.8)):1;
-  let predictions=[];
-  if(method==='trend'){const mx=axis.reduce((a,b)=>a+b,0)/n,my=vals.reduce((a,b)=>a+b,0)/n;let ss=0,sp=0;for(let i=0;i<n;i++){ss+=(axis[i]-mx)**2;sp+=(axis[i]-mx)*(vals[i]-my)}slope=ss?sp/ss:0;intercept=my-slope*mx;predictions=Array.from({length:add},(_,i)=>{const base=intercept+slope*mapShotOutputAxis[n+i];return Number((vals[n-1]+(base-vals[n-1])*rowMultiplier).toFixed(dec));});}
-  else {slope=(vals[n-1]-vals[n-2])/(axis[n-1]-axis[n-2]);let current=vals[n-1],prevAxis=axis[n-1];predictions=Array.from({length:add},(_,i)=>{const dx=mapShotOutputAxis[n+i]-prevAxis;current+=slope*dx*rowMultiplier;prevAxis=mapShotOutputAxis[n+i];return Number(current.toFixed(dec));});}
-  return [...vals,...predictions];
- });
- const orig=src[0].length;let html='<table class="mapshot-table"><thead><tr><th>Map row</th>'+Array.from({length:orig+add},(_,c)=>`<th class="${c>=orig?'newcol':''}">${mapShotAxisLabel(mapShotOutputAxis[c])} mm³</th>`).join('')+'</tr></thead><tbody>';
- mapShotOutput.forEach((row,r)=>{html+=`<tr><th>${r+1}</th>`+row.map((v,c)=>`<td class="${c>=orig?'newcol':''}">${fmt(v,dec)}</td>`).join('')+'</tr>'});html+='</tbody></table>';
- $("mapShotOutputWrap").innerHTML=html;$("mapShotStatus").textContent=`Generated ${src.length} rows at ${add} new mm³/stroke axis points using ${method==='trend'?'linear regression against actual axis values':'last-two-point slope against actual axis values'}. Verify the axis and every result.`;
+ try{
+  const src=readMapShotInputs();
+  const add=mapShotReadCount('mapShotAddCols','New columns to add',1,20);
+  const dec=Number($("mapShotDecimals").value),method=$("mapShotMethod").value;
+  if(!src.length)throw new Error('No source rows exist. Press Build / reset editable grid first.');
+  const colCount=src[0]?.length||0;
+  if(colCount<2)throw new Error('At least two existing columns are required for extrapolation.');
+  const uneven=src.findIndex(row=>!Array.isArray(row)||row.length!==colCount);
+  if(uneven>=0)throw new Error(`Source row ${uneven+1} has a different number of cells. Rebuild the grid and try again.`);
+  const missing=[];
+  src.forEach((row,r)=>row.forEach((v,c)=>{if(v===''||v===null||!Number.isFinite(Number(v)))missing.push(`R${r+1}C${c+1}`)}));
+  if(missing.length)throw new Error(`Every source cell must contain a valid number. ${missing.length} cell(s) are blank or invalid; first affected cell(s): ${missing.slice(0,8).join(', ')}${missing.length>8?'…':''}.`);
+  const axis=mapShotGetAxis(colCount),step=Number(String($("mapShotAxisStep").value).trim().replace(/,/g,'.'));
+  if(!axis)throw new Error(`Axis invalid: enter exactly ${colCount} strictly increasing numeric mm³/stroke values, one for each existing column.`);
+  if(!Number.isFinite(step)||step<=0)throw new Error('Next axis step must be a positive number.');
+  if(!Number.isInteger(dec)||dec<0||dec>6)throw new Error('Output decimal places must be between 0 and 6.');
+  if(!['linear','trend'].includes(method))throw new Error('Unknown extrapolation method selected.');
+  const suspiciousCells=src.flat().filter(v=>Math.abs(Number(v))>=100000);
+  if(suspiciousCells.length && !confirm(`Warning: ${suspiciousCells.length} source cell(s) are 100,000 or larger. This may indicate a missed decimal point. Continue only if these values are intentional.`)){
+   mapShotStatus('Extension cancelled: check unusually large source values and correct OCR errors before extending.','warn');return;
+  }
+  mapShotRowsData=src;
+  mapShotOutputAxis=[...axis,...Array.from({length:add},(_,i)=>axis[axis.length-1]+step*(i+1))];
+  const pressureSchedule=$("mapShotPressureSchedule").value;
+  mapShotOutput=src.map((row,rowIndex)=>{const vals=row.map(Number),n=vals.length;let slope,intercept;
+   const rowPressure=rowIndex*100;
+   const rowMultiplier=pressureSchedule==='on'?(rowPressure<=1000?1:(rowPressure===1100?.9:.8)):1;
+   let predictions=[];
+   if(method==='trend'){const mx=axis.reduce((a,b)=>a+b,0)/n,my=vals.reduce((a,b)=>a+b,0)/n;let ss=0,sp=0;for(let i=0;i<n;i++){ss+=(axis[i]-mx)**2;sp+=(axis[i]-mx)*(vals[i]-my)}slope=ss?sp/ss:0;intercept=my-slope*mx;predictions=Array.from({length:add},(_,i)=>{const base=intercept+slope*mapShotOutputAxis[n+i];return Number((vals[n-1]+(base-vals[n-1])*rowMultiplier).toFixed(dec));});}
+   else {slope=(vals[n-1]-vals[n-2])/(axis[n-1]-axis[n-2]);let current=vals[n-1],prevAxis=axis[n-1];predictions=Array.from({length:add},(_,i)=>{const dx=mapShotOutputAxis[n+i]-prevAxis;current+=slope*dx*rowMultiplier;prevAxis=mapShotOutputAxis[n+i];return Number(current.toFixed(dec));});}
+   return [...vals,...predictions];
+  });
+  if(mapShotOutput.length!==src.length||mapShotOutput.some(row=>row.length!==colCount+add||row.some(v=>!Number.isFinite(v))))throw new Error('The calculation failed its output integrity check. No result should be copied or exported.');
+  if(mapShotOutputAxis.length!==colCount+add||mapShotOutputAxis.some((v,i)=>!Number.isFinite(v)||(i>0&&v<=mapShotOutputAxis[i-1])))throw new Error('The generated axis failed its integrity check. Check the axis step and source values.');
+  const orig=colCount;let html='<table class="mapshot-table"><thead><tr><th>Map row</th>'+Array.from({length:orig+add},(_,c)=>`<th class="${c>=orig?'newcol':''}">${mapShotAxisLabel(mapShotOutputAxis[c])} mm³</th>`).join('')+'</tr></thead><tbody>';
+  mapShotOutput.forEach((row,r)=>{html+='<tr><th>'+(r+1)+'</th>'+row.map((v,c)=>`<td class="${c>=orig?'newcol':''}">${fmt(v,dec)}</td>`).join('')+'</tr>'});html+='</tbody></table>';
+  $("mapShotOutputWrap").innerHTML=html;
+  mapShotStatus(`Extension generated and checked: ${src.length} rows, ${colCount} source columns + ${add} new columns. Method: ${method==='trend'?'linear regression against axis values':'last-two-point slope against axis values'}. Verify every value before using it.`,'success');
+ }catch(error){
+  mapShotOutput=[];mapShotOutputAxis=[];
+  $("mapShotOutputWrap").innerHTML='<p style="padding:12px" class="muted">No valid extended table was generated. Correct the issue shown in the status message, then try again.</p>';
+  mapShotStatus(`Extension failed: ${error?.message||String(error)}`,'error');
+ }
 };
 function mapShotTsv(){return mapShotOutput.map(r=>r.join('\t')).join('\n')}
-$("mapShotCopy").onclick=()=>{if(!mapShotOutput.length){alert('Generate the extended table first.');return}copyText(mapShotTsv())};
-$("mapShotExport").onclick=()=>{if(!mapShotOutput.length){alert('Generate the extended table first.');return}downloadCsv('extended_map.csv',['map_row',...mapShotOutputAxis.map(v=>`${v} mm3/stroke`)],mapShotOutput)};
+$("mapShotCopy").onclick=()=>{if(!mapShotOutput.length){mapShotStatus('Nothing to copy: extend the map successfully first.','error');return}try{copyText(mapShotTsv());mapShotStatus('Copy requested. If clipboard permissions block it, use Export CSV instead.','success')}catch(error){mapShotStatus(`Copy failed: ${error?.message||error}`,'error')}};
+$("mapShotExport").onclick=()=>{if(!mapShotOutput.length){mapShotStatus('Nothing to export: extend the map successfully first.','error');return}try{downloadCsv('extended_map.csv',['map_row',...mapShotOutputAxis.map(v=>`${v} mm3/stroke`)],mapShotOutput);mapShotStatus('CSV export started. Check your Downloads folder.','success')}catch(error){mapShotStatus(`CSV export failed: ${error?.message||error}`,'error')}};
 
 // Offline lightweight screenshot OCR: local canvas processing and glyph-template matching.
 // This is intentionally a prototype; numeric results must be manually verified.
@@ -1034,6 +1118,127 @@ refreshEoiInputs();
   prepare(document);
   new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1)prepare(node)})))
     .observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<div id="diagnosticsWidget" aria-live="polite">
+ <div id="diagnosticsPanel" role="region" aria-label="Workbench diagnostics" aria-hidden="true">
+  <div class="diag-head"><div><strong>Workbench diagnostics</strong><div class="diag-subtitle" id="diagnosticsSummary">Starting checks…</div></div><button id="diagnosticsClose" type="button" aria-label="Close diagnostics" style="padding:5px 8px;width:auto">✕</button></div>
+  <div class="diag-controls"><button id="diagnosticsRun" type="button">Run checks</button><button id="diagnosticsExport" type="button">Export log</button><button id="diagnosticsCopy" type="button">Copy log</button><button id="diagnosticsClear" type="button">Clear log</button></div>
+  <div id="diagnosticsList"><div class="diag-empty">Diagnostics are initializing.</div></div>
+ </div>
+ <button id="diagnosticsToggle" type="button" aria-expanded="false" aria-controls="diagnosticsPanel">Diagnostics <span id="diagnosticsBadge">…</span></button>
+</div>
+
+<script>
+/* v1.2.28: Workbench diagnostics. Logs uncaught errors, promise rejections, validation failures,
+   and button clicks that produce no observable UI update. It never claims a calculation is correct
+   merely because JavaScript ran; critical map output is checked separately before display/export. */
+(()=>{
+ const $d=id=>document.getElementById(id), entries=[]; const MAX=250;
+ let appMutationCount=0, actionId=0;
+ const widget=$d('diagnosticsWidget'),panel=$d('diagnosticsPanel'),list=$d('diagnosticsList'),badge=$d('diagnosticsBadge'),summary=$d('diagnosticsSummary');
+ if(!widget||!panel||!list||!badge||!summary)return;
+ const escText=v=>String(v??'');
+ const time=()=>new Date().toLocaleTimeString();
+ function render(){
+  const issues=entries.filter(e=>e.level==='error'||e.level==='warn').length;
+  const errors=entries.filter(e=>e.level==='error').length;
+  badge.textContent=issues?String(issues):'OK';badge.classList.toggle('has-issues',issues>0);
+  summary.textContent=errors?`${errors} error(s) · ${issues-errors} warning(s) · ${entries.length} log entries`:(issues?`${issues} warning(s) · ${entries.length} log entries`:`No errors reported · ${entries.length} log entries`);
+  if(!entries.length){list.innerHTML='<div class="diag-empty">No problems have been recorded. Click “Run checks” to inspect the app structure.</div>';return;}
+  list.replaceChildren();
+  for(const e of [...entries].reverse()){
+   const row=document.createElement('div');row.className=`diag-entry ${e.level}`;
+   const meta=document.createElement('div');meta.className='diag-meta';
+   const lev=document.createElement('span');lev.className='diag-level';lev.textContent=e.level;
+   const stamp=document.createElement('span');stamp.textContent=e.time;
+   meta.append(lev,stamp);
+   if(e.area){const area=document.createElement('span');area.textContent='· '+e.area;meta.append(area)}
+   const msg=document.createElement('div');msg.className='diag-message';msg.textContent=e.message;
+   row.append(meta,msg);
+   if(e.detail){const detail=document.createElement('div');detail.className='diag-message';detail.style.color='#a8b9d0';detail.style.marginTop='4px';detail.textContent=typeof e.detail==='string'?e.detail:JSON.stringify(e.detail);row.append(detail)}
+   list.append(row);
+  }
+ }
+ function record(level,message,detail=null,area=''){
+  entries.push({level,message:escText(message),detail,time:time(),area});if(entries.length>MAX)entries.splice(0,entries.length-MAX);render();
+  if(level==='error')console.error('[Workbench diagnostics]',message,detail||'');
+  return entries[entries.length-1];
+ }
+ function success(message,detail=null){return record('success',message,detail)}
+ function info(message,detail=null){return record('info',message,detail)}
+ function warn(message,detail=null){return record('warn',message,detail)}
+ function error(message,detail=null){return record('error',message,detail)}
+ function scanResultIntegrity(source='Action result check'){
+  const selectors=['#mapShotStatus','#mapShotOutputWrap','#eoiResults','#contextResults','#interpY','#interpMethod','#hpResults','#status'];
+  const flagged=[];
+  for(const selector of selectors){const el=document.querySelector(selector);if(!el||widget.contains(el))continue;const text=String(el.textContent||'').trim();if(!text)continue;
+   const invalid=text.match(/\b(?:NaN|Infinity|-Infinity|undefined)\b/g);
+   if(invalid)flagged.push({selector,values:[...new Set(invalid)],sample:text.slice(0,180)});
+  }
+  if(flagged.length)error('A result area contains an invalid numeric/runtime token. Treat the displayed result as unusable until checked.',{source,areas:flagged});
+  return {ok:flagged.length===0,flagged};
+ }
+ function runChecks(){
+  const before=entries.length, problems=[];
+  const required=['mapShotRows','mapShotCols','mapShotBuild','mapShotGridWrap','mapShotExtend','mapShotStatus','mapShotOutputWrap','mapShotAxis','mapShotAxisStep','mapShotAddCols'];
+  for(const id of required){const nodes=document.querySelectorAll(`[id="${id}"]`);if(nodes.length===0)problems.push(`Required control is missing: #${id}`);else if(nodes.length>1)problems.push(`Duplicate element id: #${id} appears ${nodes.length} times.`)}
+  const allIds=[...document.querySelectorAll('[id]')].map(el=>el.id), duplicates=[...new Set(allIds.filter((id,i)=>allIds.indexOf(id)!==i))];
+  for(const id of duplicates)if(!required.includes(id))problems.push(`Duplicate id detected: #${id}`);
+  for(const fn of ['mapShotBuildGrid','mapShotGetAxis','readMapShotInputs'])if(typeof window[fn]!=='function')problems.push(`Map extender function is unavailable: ${fn}()`);
+  const rowEl=$d('mapShotRows'),colEl=$d('mapShotCols');
+  if(rowEl&&colEl){
+   const rows=Number(String(rowEl.value).replace(',','.')),cols=Number(String(colEl.value).replace(',','.'));
+   if(!Number.isInteger(rows)||rows<1||rows>80)problems.push('Current row count is outside 1–80.');
+   if(!Number.isInteger(cols)||cols<2||cols>40)problems.push('Current column count is outside 2–40.');
+   const cellCount=document.querySelectorAll('#mapShotGridWrap [data-ms-r]').length;
+   if(Number.isInteger(rows)&&Number.isInteger(cols)&&cellCount!==rows*cols)problems.push(`Grid count mismatch: controls request ${rows} × ${cols} = ${rows*cols} cells, but ${cellCount} are present. Press Build / reset editable grid.`);
+   const axis=typeof window.mapShotGetAxis==='function'?window.mapShotGetAxis(cols):null;
+   if(!axis)problems.push('The current axis list is invalid or does not match the number of columns. The grid may still be editable, but extension is blocked.');
+  }
+  if(problems.length){for(const p of problems)record('error',p,null,'Self-check');}
+  else success('Self-check passed: required map controls and functions are present; current grid counts and axis are consistent.');
+  return {ok:problems.length===0,problems,count:entries.length-before};
+ }
+ function downloadLog(){
+  try{const data={appVersion:$d('appVersion')?.textContent||'unknown',createdAt:new Date().toISOString(),userAgent:navigator.userAgent,entries};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`diesel-ecu-workbench-diagnostics-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);success('Diagnostic log export started.');}catch(e){error('Could not export the diagnostic log.',e?.message||String(e));}
+ }
+ async function copyLog(){
+  const content=JSON.stringify({appVersion:$d('appVersion')?.textContent||'unknown',createdAt:new Date().toISOString(),entries},null,2);
+  try{await navigator.clipboard.writeText(content);success('Diagnostic log copied to clipboard.');}
+  catch(e){try{const ta=document.createElement('textarea');ta.value=content;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();const ok=document.execCommand('copy');ta.remove();if(!ok)throw new Error('Clipboard copy was rejected by the browser.');success('Diagnostic log copied to clipboard.');}catch(inner){error('Could not copy the log. Use Export log instead.',inner?.message||String(inner));}}
+ }
+ window.WorkbenchDiagnostics={info,success,warn,error,runChecks,downloadLog,copyLog,scanResultIntegrity,getEntries:()=>entries.slice()};
+ $d('diagnosticsToggle').addEventListener('click',()=>{const isOpen=panel.classList.toggle('open');panel.setAttribute('aria-hidden',String(!isOpen));$d('diagnosticsToggle').setAttribute('aria-expanded',String(isOpen));if(isOpen)runChecks();});
+ $d('diagnosticsClose').addEventListener('click',()=>{$d('diagnosticsToggle').click()});
+ $d('diagnosticsRun').addEventListener('click',runChecks);
+ $d('diagnosticsExport').addEventListener('click',downloadLog);
+ $d('diagnosticsCopy').addEventListener('click',copyLog);
+ $d('diagnosticsClear').addEventListener('click',()=>{entries.length=0;render();info('Log cleared. New diagnostics will still be recorded.');});
+ window.addEventListener('error',ev=>{error(`Uncaught JavaScript error: ${ev.message||'unknown error'}`,{file:ev.filename||'',line:ev.lineno||0,column:ev.colno||0});});
+ window.addEventListener('unhandledrejection',ev=>{const reason=ev.reason;error('Unhandled promise rejection.',reason?.stack||reason?.message||String(reason));});
+ for(const early of (window.__workbenchEarlyErrors||[]))error(`Startup ${early.kind==='rejection'?'promise rejection':'JavaScript error'}: ${early.message}`,early);
+ window.__workbenchEarlyErrors=[];
+ const observer=new MutationObserver(records=>{
+  for(const r of records){let target=r.target;if(target.nodeType===Node.TEXT_NODE)target=target.parentElement;if(!target||widget.contains(target))continue;appMutationCount++;}
+ });
+ observer.observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});
+ document.addEventListener('click',ev=>{
+  const button=ev.target?.closest?.('button');if(!button||widget.contains(button)||button.disabled)return;
+  const label=(button.innerText||button.getAttribute('aria-label')||button.id||'Unnamed button').trim().replace(/\s+/g,' ').slice(0,100);
+  const id=++actionId,baseline=appMutationCount;
+  info(`Action clicked: ${label}`,{buttonId:button.id||'(no id)'});
+  setTimeout(()=>{
+   scanResultIntegrity(`After clicking ${label}`);
+   if(appMutationCount>baseline)success(`Action response detected: ${label}. This confirms the UI changed, not that the calculation is necessarily correct.`,{changes:appMutationCount-baseline,actionId:id});
+   else warn(`No visible UI update detected after “${label}”. This can be normal for copy/export actions, canvas redraws, or native dialogs. If a visible result was expected but nothing happened, inspect this event and export the log.`,{buttonId:button.id||'(no id)',actionId:id});
+  },1100);
+ },true);
+ // Lightweight startup diagnostics: test structural wiring without altering user data.
+ const version=$d('appVersion')?.textContent||'version unknown';
+ info(`Diagnostics active for ${version}. Uncaught errors, promise failures, structural mismatches and unresponsive-looking button clicks will be logged.`);
+ runChecks();
 })();
 </script>
 </body>
